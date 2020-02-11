@@ -79,9 +79,12 @@ int main() {
 
 	initWindow();
 
-	CBlobDetectorController blob1;
+	CBlobDetectorController blobConfigBar;
 	std::shared_ptr<cv::SimpleBlobDetector::Params> blobparams(new cv::SimpleBlobDetector::Params);
-	blob1.open(blobparams,"bigmarker");
+	
+	InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
+	blobConfigBar.open(blobparams,"bigmarker");
+
 
 	COpenCVVideoControlBar controlbar(MAIN_WINDOW_NAME);
 	
@@ -98,7 +101,11 @@ int main() {
 		if (frame.empty())
 			break;
 		vector<KeyPoint> corners;
-		bool isFoundFlag = FindWhiteInBlackCircleGrid(frame, maxBlobSize, minBlobSize, minCircularity, corners);
+		
+		
+		bool isFoundFlag = FindWhiteInBlackCircleGrid(blobparams,frame, corners);
+
+
 		if (corners.size() == 4) {
 			vector<int> hullID;
 			vector<Point2f> pt;

@@ -5,5 +5,7 @@
 using namespace std;
 using namespace cv;
 
-bool FindWhiteInBlackCircleGrid(Mat src, float maxSize, float minSize, float minCircularity, vector<KeyPoint> &corners);
+void InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params, float minSize, float maxSize, float minCircularity);
+
+bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> params, Mat src, vector<KeyPoint> &corners);
 

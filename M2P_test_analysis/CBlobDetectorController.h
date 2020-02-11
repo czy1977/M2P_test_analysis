@@ -7,6 +7,7 @@ protected:
 	std::string windowName;
 	bool needUpdate;
 	void dirty();
+
 	
 
 
@@ -55,6 +56,7 @@ public:
 	~CBlobDetectorController();
 	void open(std::shared_ptr<cv::SimpleBlobDetector::Params> parameters,std::string name);
 	std::shared_ptr<cv::SimpleBlobDetector::Params> targetParameter;
+	bool isDirty() { return needUpdate; }
 
 };
 
