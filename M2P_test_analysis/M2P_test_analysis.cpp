@@ -8,22 +8,34 @@
 #include "OCVInterface.h"
 #include "CBlobDetectorController.h"
 #include "COpenCVVideoControlBar.h"
+#include "CReferenceBoard.h"
+
 #define MAIN_WINDOW_NAME "Frame"
 
 using namespace std;
 using namespace cv;
 
 float maxBlobSize = 10000;
-float minBlobSize = 200;
+float minBlobSize = 100;
 float minCircularity = 0.7;
+
 #define KEYCODE_ESCAP 27
 #define KEYCODE_SPACE 32
 #define KEYCODE_LEFT 2424832
 #define KEYCODE_RIGHT 2555904
 
+struct MOUSE_STATE {
+	int event;
+	int x;
+	int y;
+	int flags;
+} mouse_state;
+
+cv::Mat4f boardTrans;
+
 void initWindow() {
 	cv::namedWindow(MAIN_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
+	//cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
 
 
 }
@@ -64,12 +76,29 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
+void DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Point2f pt) {
+	CReferenceBoard refBoard;
+	vector<Point2f> inputArray(4);
+	inputArray[0] = lb;
+	inputArray[1] = rb;
+	inputArray[2] = rt;
+	inputArray[3] = lt;
+	Point2f uv = refBoard.GetUVCoordinate(inputArray,pt);
+	
+	std::ostringstream uvText;
+	uvText << std::setprecision(2);
+	uvText << uv.x << "," << uv.y;
+
+	putText(frame, uvText.str(), pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+}
+
+
 
 int main() {
 
 
 	VideoCapture cap("D:/dev/python/jupyter/2020-01-09_latency/C0009-converted.mp4");
-	cap.set(CV_CAP_PROP_POS_FRAMES, 1000);
+	cap.set(CV_CAP_PROP_POS_FRAMES, 1500);
 	frameControlFlag = FRAME_PLAY;
 	if (!cap.isOpened()) {
 		
@@ -87,6 +116,13 @@ int main() {
 
 
 	COpenCVVideoControlBar controlbar(MAIN_WINDOW_NAME);
+
+	cv::setMouseCallback(MAIN_WINDOW_NAME,[](int event, int x, int y, int flags, void *userdata)-> void {
+		mouse_state.event = event;
+		mouse_state.x = x;
+		mouse_state.y = y;
+		mouse_state.flags = flags;
+	});
 	
 	
 	while (1) {
@@ -120,6 +156,11 @@ int main() {
 				circle(frame, Point2f(corners[1].pt.x, corners[1].pt.y), 3, Scalar(255, 0, 0), 3);
 				circle(frame, Point2f(corners[2].pt.x, corners[2].pt.y), 3, Scalar(255, 0, 0), 3);
 				circle(frame, Point2f(corners[3].pt.x, corners[3].pt.y), 3, Scalar(255, 0, 0), 3);
+
+				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
+					DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]], Point2f(mouse_state.x, mouse_state.y));
+				}
+				
 			}
 		}
 		
@@ -141,6 +182,13 @@ int main() {
 				circle(frame, pt[hullID[2]], 3, Scalar(255, 0, 0), 3);
 				circle(frame, pt[hullID[3]], 3, Scalar(255, 0, 0), 3);
 				circle(frame, pt[centerID], 3, Scalar(0, 0, 255), 3);
+
+				DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]],pt[centerID]);
+
+				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
+					DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]], Point2f(mouse_state.x, mouse_state.y));
+				}
+				
 			}
 			else {
 				cout << "..." << endl;
@@ -148,7 +196,12 @@ int main() {
 
 		}
 
+
+		
 		imshow("Frame", frame);
+
+
+
 
 		// Press  ESC on keyboard to exit
 		int c = (int)waitKeyEx(1);

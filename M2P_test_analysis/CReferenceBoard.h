@@ -1,0 +1,19 @@
+#pragma once
+#include "opencv2/opencv.hpp"
+#include <vector>
+class CReferenceBoard
+{
+public:
+	CReferenceBoard();
+	virtual ~CReferenceBoard();
+	std::vector<cv::Point2f> refPoints;
+	// get homography matrix  from a perspective projected points
+	cv::Matx33f GetTrans(std::vector<cv::Point2f> input);
+	cv::Size2f GetSize();
+	// get a UV value from a peojected 2d point based on the . 
+	cv::Point2f GetUVCoordinate(std::vector<cv::Point2f> projectedPoints, cv::Point2f referencePoint);
+	cv::Point2f GetUVCoordinate(cv::Matx33f homography, cv::Point2f referencePoint);
+private:
+	void InitRefPoints();
+};
+

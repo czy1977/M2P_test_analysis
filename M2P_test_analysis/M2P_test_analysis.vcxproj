@@ -160,6 +160,7 @@
   <ItemGroup>
     <ClInclude Include="CBlobDetectorController.h" />
     <ClInclude Include="COpenCVVideoControlBar.h" />
+    <ClInclude Include="CReferenceBoard.h" />
     <ClInclude Include="markerDetect.h" />
     <ClInclude Include="OCVInterface.h" />
     <ClInclude Include="pch.h" />
@@ -168,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="CBlobDetectorController.cpp" />
     <ClCompile Include="COpenCVVideoControlBar.cpp" />
+    <ClCompile Include="CReferenceBoard.cpp" />
     <ClCompile Include="M2P_test_analysis.cpp" />
     <ClCompile Include="markerDetect.cpp" />
     <ClCompile Include="OCVInterface.cpp" />

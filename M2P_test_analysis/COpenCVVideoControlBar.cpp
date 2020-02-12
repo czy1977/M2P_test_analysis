@@ -25,8 +25,7 @@ COpenCVVideoControlBar::COpenCVVideoControlBar(std::string masterWindowName):
 		}
 
 	}, this);
-	//cv::setWindowTitle(TRACKBAR_NAME,"video");
-	//cv::setWindowProperty(TRACKBAR_NAME, cv::WND_PROP_AUTOSIZE,1.0);
+
 }
 
 
