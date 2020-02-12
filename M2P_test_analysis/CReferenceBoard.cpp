@@ -48,6 +48,16 @@ cv::Point2f CReferenceBoard::GetUVCoordinate(cv::Matx33f homography, cv::Point2f
 	return cv::Point2f(outputArr[0].x / BOARD_WIDTH, outputArr[0].y/ BOARD_HEIGHT);
 }
 
+cv::Point2f CReferenceBoard::GetReprojectedCoordinate(cv::Matx33f homography, cv::Point2f uv)
+{
+	Matx33f invhomography;
+	vector<cv::Point2f> outputArr(1);
+	cv::invert(homography, invhomography);
+	cv::Point2f pixelPosInSrc(uv.x * BOARD_WIDTH, uv.y* BOARD_HEIGHT);
+	cv::perspectiveTransform(vector<cv::Point2f>({ pixelPosInSrc }), outputArr, invhomography);
+	return outputArr[0];
+}
+
 
 
 void CReferenceBoard::InitRefPoints()

@@ -9,6 +9,7 @@
 #include "CBlobDetectorController.h"
 #include "COpenCVVideoControlBar.h"
 #include "CReferenceBoard.h"
+#include "M2P_test_analysis.h"
 
 #define MAIN_WINDOW_NAME "Frame"
 
@@ -76,13 +77,8 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
-Point2f DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Point2f pt) {
+Point2f DrawUVValue(Mat frame, vector<Point2f> inputArray,Point2f pt) {
 	CReferenceBoard refBoard;
-	vector<Point2f> inputArray(4);
-	inputArray[0] = lb;
-	inputArray[1] = rb;
-	inputArray[2] = rt;
-	inputArray[3] = lt;
 	Point2f uv = refBoard.GetUVCoordinate(inputArray,pt);
 	
 	std::ostringstream uvText;
@@ -93,6 +89,31 @@ Point2f DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Po
 
 	return uv;
 }
+#define UV_AVRAGE_NUMBER 20
+Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int number)
+{
+	Point2f uv(0, 0);
+	int count = 0;
+	for (auto it = uvHistory.begin(); it != uvHistory.end() && count < number; it++, count++) {
+		uv += (*it);
+	}
+	uv /= (float)count;
+	return uv;
+}
+void DrawStartUV(Mat frame,list<Point2f> uvHistory, vector<Point2f> inputArray) {
+	CReferenceBoard refBoard;
+	
+	if (uvHistory.size() < UV_AVRAGE_NUMBER)
+	{
+		return;
+	}
+	Point2f uv = GetMeanValue(uvHistory, UV_AVRAGE_NUMBER);
+	Matx33f homography = refBoard.GetTrans(inputArray);
+	Point2f reprojectedPoint = refBoard.GetReprojectedCoordinate(homography,uv);
+
+	cv::drawMarker(frame, reprojectedPoint, Scalar(255, 255, 0), MARKER_CROSS,40);
+}
+
 void SaveUVList( std::string path, list<Point2f> uvList) {
 	std::ofstream o(path, std::ofstream::trunc);
 	o << std::setprecision(6);
@@ -106,11 +127,13 @@ void SaveUVList( std::string path, list<Point2f> uvList) {
 #define VIDEO_FILE ("C0009-converted.mp4")
 #define UVLOG_FILE ("uvList.csv")
 int main() {
-
+	Mat frame;
 	std::list<Point2f> uvList;
 
 	VideoCapture cap(VIDEO_FILE);
-	cap.set(CV_CAP_PROP_POS_FRAMES, 100);
+	//frame = GetVideoFrame(cap, frameControlFlag);
+	
+	cap.set(CV_CAP_PROP_POS_FRAMES, 1500);
 	frameControlFlag = FRAME_PLAY;
 	if (!cap.isOpened()) {
 		
@@ -139,7 +162,7 @@ int main() {
 	
 	while (1) {
 
-		Mat frame;
+
 
 		frame = GetVideoFrame(cap, frameControlFlag);
 
@@ -170,7 +193,7 @@ int main() {
 				circle(frame, Point2f(corners[3].pt.x, corners[3].pt.y), 3, Scalar(255, 0, 0), 3);
 
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]], Point2f(mouse_state.x, mouse_state.y));
+					DrawUVValue(frame, { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] }, Point2f(mouse_state.x, mouse_state.y));
 				}
 				
 			}
@@ -195,13 +218,16 @@ int main() {
 				circle(frame, pt[hullID[3]], 3, Scalar(255, 0, 0), 3);
 				circle(frame, pt[centerID], 3, Scalar(0, 0, 255), 3);
 
-				Point2f uv = DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]],pt[centerID]);
+
+				vector<Point2f> inputArray = { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] };
+				Point2f uv = DrawUVValue(frame, inputArray, pt[centerID]);
 				uvList.push_back(uv);
 
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]], Point2f(mouse_state.x, mouse_state.y));
+					DrawUVValue(frame, inputArray, Point2f(mouse_state.x, mouse_state.y));
 				}
 				
+				DrawStartUV(frame,uvList, inputArray);
 			}
 			else {
 				cout << "..." << endl;

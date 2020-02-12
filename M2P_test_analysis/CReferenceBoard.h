@@ -13,6 +13,7 @@ public:
 	// get a UV value from a peojected 2d point based on the . 
 	cv::Point2f GetUVCoordinate(std::vector<cv::Point2f> projectedPoints, cv::Point2f referencePoint);
 	cv::Point2f GetUVCoordinate(cv::Matx33f homography, cv::Point2f referencePoint);
+	cv::Point2f GetReprojectedCoordinate(cv::Matx33f homography, cv::Point2f uv);
 private:
 	void InitRefPoints();
 };

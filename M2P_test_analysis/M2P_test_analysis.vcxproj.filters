@@ -36,6 +36,9 @@
     <ClInclude Include="CReferenceBoard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="M2P_test_analysis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

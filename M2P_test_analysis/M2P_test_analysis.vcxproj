@@ -161,6 +161,7 @@
     <ClInclude Include="CBlobDetectorController.h" />
     <ClInclude Include="COpenCVVideoControlBar.h" />
     <ClInclude Include="CReferenceBoard.h" />
+    <ClInclude Include="M2P_test_analysis.h" />
     <ClInclude Include="markerDetect.h" />
     <ClInclude Include="OCVInterface.h" />
     <ClInclude Include="pch.h" />
