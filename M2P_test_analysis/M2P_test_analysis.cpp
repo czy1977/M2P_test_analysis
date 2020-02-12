@@ -76,7 +76,7 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
-void DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Point2f pt) {
+Point2f DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Point2f pt) {
 	CReferenceBoard refBoard;
 	vector<Point2f> inputArray(4);
 	inputArray[0] = lb;
@@ -90,15 +90,27 @@ void DrawUVValue(Mat frame, Point2f lb, Point2f rb, Point2f rt, Point2f lt,Point
 	uvText << uv.x << "," << uv.y;
 
 	putText(frame, uvText.str(), pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+
+	return uv;
+}
+void SaveUVList( std::string path, list<Point2f> uvList) {
+	std::ofstream o(path, std::ofstream::trunc);
+	o << std::setprecision(6);
+	for (auto it = uvList.begin(); it != uvList.end(); it++) {
+		Point2f uv = *it;
+		o << uv.x << " , " << uv.y << std::endl;
+	}
+	o.close();
 }
 
-
-
+#define VIDEO_FILE ("C0009-converted.mp4")
+#define UVLOG_FILE ("uvList.csv")
 int main() {
 
+	std::list<Point2f> uvList;
 
-	VideoCapture cap("D:/dev/python/jupyter/2020-01-09_latency/C0009-converted.mp4");
-	cap.set(CV_CAP_PROP_POS_FRAMES, 1500);
+	VideoCapture cap(VIDEO_FILE);
+	cap.set(CV_CAP_PROP_POS_FRAMES, 100);
 	frameControlFlag = FRAME_PLAY;
 	if (!cap.isOpened()) {
 		
@@ -183,7 +195,8 @@ int main() {
 				circle(frame, pt[hullID[3]], 3, Scalar(255, 0, 0), 3);
 				circle(frame, pt[centerID], 3, Scalar(0, 0, 255), 3);
 
-				DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]],pt[centerID]);
+				Point2f uv = DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]],pt[centerID]);
+				uvList.push_back(uv);
 
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
 					DrawUVValue(frame, pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]], Point2f(mouse_state.x, mouse_state.y));
@@ -228,6 +241,9 @@ int main() {
 
 	// Closes all the frames
 	destroyAllWindows();
+
+
+	SaveUVList(UVLOG_FILE,uvList);
 
 	return 0;
 }
