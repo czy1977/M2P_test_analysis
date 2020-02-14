@@ -12,18 +12,28 @@
 #include "M2P_test_analysis.h"
 
 #define MAIN_WINDOW_NAME "Frame"
-
-using namespace std;
-using namespace cv;
-
-float maxBlobSize = 10000;
-float minBlobSize = 100;
-float minCircularity = 0.7;
+#define UV_AVRAGE_NUMBER 20
 
 #define KEYCODE_ESCAP 27
 #define KEYCODE_SPACE 32
 #define KEYCODE_LEFT 2424832
 #define KEYCODE_RIGHT 2555904
+
+
+using namespace std;
+using namespace cv;
+
+float maxBlobSize = 5000;
+float minBlobSize = 200;
+float minCircularity = 0.7f;
+
+
+#define VIDEO_FILE ("C0001-converted.mp4")
+#define UVLOG_FILE ("log.csv")
+
+//#define VIDEO_FILE ("C0008.mp4")
+//#define UVLOG_FILE ("log8.csv")
+#define VIDEO_START_FRAME (400)
 
 struct MOUSE_STATE {
 	int event;
@@ -32,22 +42,15 @@ struct MOUSE_STATE {
 	int flags;
 } mouse_state;
 
-cv::Mat4f boardTrans;
+
+
 
 void initWindow() {
 	cv::namedWindow(MAIN_WINDOW_NAME, cv::WINDOW_NORMAL);
-	//cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
-
-
+	cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
 }
 
-enum FRAME_CONTROL {
-	FRAME_PLAY,
-	FRAME_PAUSE,
-	FRAME_FORWARD_ONE_FRAME,
-	FRAME_BACKWARD_ONE_FRAME,
-	FRAME_ONE_FRAME_PAUSE
-} ;
+
 FRAME_CONTROL frameControlFlag;
 
 Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
@@ -77,63 +80,70 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
-Point2f DrawUVValue(Mat frame, vector<Point2f> inputArray,Point2f pt) {
-	CReferenceBoard refBoard;
-	Point2f uv = refBoard.GetUVCoordinate(inputArray,pt);
+Point2f  GetUVValue(CReferenceBoard refBoard,  Point2f pt) {
+	return refBoard.GetUVCoordinate( pt);
+}
+void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
 	
 	std::ostringstream uvText;
 	uvText << std::setprecision(2);
 	uvText << uv.x << "," << uv.y;
-
 	putText(frame, uvText.str(), pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
-
-	return uv;
+	return ;
 }
-#define UV_AVRAGE_NUMBER 20
-Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int number)
+
+Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int maxNumber)
 {
 	Point2f uv(0, 0);
 	int count = 0;
-	for (auto it = uvHistory.begin(); it != uvHistory.end() && count < number; it++, count++) {
+	for (auto it = uvHistory.begin(); it != uvHistory.end() && count < maxNumber; it++, count++) {
 		uv += (*it);
 	}
 	uv /= (float)count;
 	return uv;
 }
-void DrawStartUV(Mat frame,list<Point2f> uvHistory, vector<Point2f> inputArray) {
-	CReferenceBoard refBoard;
-	
-	if (uvHistory.size() < UV_AVRAGE_NUMBER)
-	{
-		return;
-	}
-	Point2f uv = GetMeanValue(uvHistory, UV_AVRAGE_NUMBER);
-	Matx33f homography = refBoard.GetTrans(inputArray);
-	Point2f reprojectedPoint = refBoard.GetReprojectedCoordinate(homography,uv);
-
-	cv::drawMarker(frame, reprojectedPoint, Scalar(255, 255, 0), MARKER_CROSS,40);
+void DrawStartUV(Mat frame, Point2f pt) {
+	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS,40);
 }
 
-void SaveUVList( std::string path, list<Point2f> uvList) {
+void GetExpectedPositionFromMeanValue(std::list<cv::Point2f> &uvHistory, CReferenceBoard &refBoard,  cv::Point2f &reprojectedPoint)
+{
+	Point2f uv = GetMeanValue(uvHistory, UV_AVRAGE_NUMBER);
+	reprojectedPoint = refBoard.GetReprojectedCoordinate(uv);
+}
+
+void SaveLog( std::string path, list<LOG_INFO> uvList) {
 	std::ofstream o(path, std::ofstream::trunc);
 	o << std::setprecision(6);
+	// output header
+	o << "u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+
 	for (auto it = uvList.begin(); it != uvList.end(); it++) {
-		Point2f uv = *it;
-		o << uv.x << " , " << uv.y << std::endl;
+		Point2f uv = it->uv;
+		cv::Point2f realPositionInPixel = it->realPositionInPixel;
+		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
+		o << uv.x << " , " << uv.y << " , ";
+		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
+		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
+		o<< std::endl;
 	}
 	o.close();
 }
 
-#define VIDEO_FILE ("C0009-converted.mp4")
-#define UVLOG_FILE ("uvList.csv")
+
 int main() {
 	Mat frame;
-	std::list<Point2f> uvList;
+
+	std::list<LOG_INFO> logList;
+	std::list<cv::Point2f> uvHistoryList;
+
+
+	CReferenceBoard renderenceBoard;
 
 	VideoCapture cap(VIDEO_FILE);
 	//frame = GetVideoFrame(cap, frameControlFlag);
 	
-	cap.set(CV_CAP_PROP_POS_FRAMES, 1500);
+	cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
 	frameControlFlag = FRAME_PLAY;
 	if (!cap.isOpened()) {
 		
@@ -162,10 +172,8 @@ int main() {
 	
 	while (1) {
 
-
-
+		LOG_INFO stepLog;
 		frame = GetVideoFrame(cap, frameControlFlag);
-
 		controlbar.UpdateStatus(cap);	
 
 
@@ -174,7 +182,8 @@ int main() {
 		vector<KeyPoint> corners;
 		
 		
-		bool isFoundFlag = FindWhiteInBlackCircleGrid(blobparams,frame, corners);
+		bool isFoundFlag =false;
+		isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
 
 
 		if (corners.size() == 4) {
@@ -192,8 +201,12 @@ int main() {
 				circle(frame, Point2f(corners[2].pt.x, corners[2].pt.y), 3, Scalar(255, 0, 0), 3);
 				circle(frame, Point2f(corners[3].pt.x, corners[3].pt.y), 3, Scalar(255, 0, 0), 3);
 
+				
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					DrawUVValue(frame, { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] }, Point2f(mouse_state.x, mouse_state.y));
+					vector<Point2f> inputArray = { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] };
+					renderenceBoard.UpdateCurrentTransform(inputArray);
+					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x,(float) mouse_state.y));
+					DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
 				}
 				
 			}
@@ -220,46 +233,39 @@ int main() {
 
 
 				vector<Point2f> inputArray = { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] };
-				Point2f uv = DrawUVValue(frame, inputArray, pt[centerID]);
-				uvList.push_back(uv);
+				renderenceBoard.UpdateCurrentTransform(inputArray);
+				Point2f uv = renderenceBoard.GetUVCoordinate(pt[centerID]);
+				uvHistoryList.push_back(uv);
+				Point2f expectedPosition(0,0);
+				GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard,  expectedPosition);
+				Point2f centerPt(pt[centerID]);
+				DrawUVValue(frame, uv, centerPt);
+				
+				stepLog.uv = uv;
+				stepLog.realPositionInPixel = centerPt;
+				stepLog.expectedPositionInPixel = expectedPosition;
+				logList.push_back(stepLog);
+
+				
 
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					DrawUVValue(frame, inputArray, Point2f(mouse_state.x, mouse_state.y));
+					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f(mouse_state.x, mouse_state.y));
+					DrawUVValue(frame, uv, Point2f(mouse_state.x, mouse_state.y));
 				}
-				
-				DrawStartUV(frame,uvList, inputArray);
+			
+				DrawStartUV(frame , expectedPosition);
 			}
 			else {
 				cout << "..." << endl;
 			}
 
 		}
-
-
-		
 		imshow("Frame", frame);
 
-
-
-
-		// Press  ESC on keyboard to exit
-		int c = (int)waitKeyEx(1);
-		//cout << (int)c <<endl;	
-		if (c == KEYCODE_ESCAP)
+		bool needQuit = false;
+		ProcessMainLoopKeyEvent(needQuit, frameControlFlag);
+		if (needQuit) 
 			break;
-
-		else if (c== KEYCODE_SPACE) {
-			if(frameControlFlag == FRAME_PAUSE)
-				frameControlFlag = FRAME_PLAY;
-			else
-				frameControlFlag = FRAME_PAUSE;
-		}
-		else if (c == KEYCODE_LEFT) {
-				frameControlFlag = FRAME_BACKWARD_ONE_FRAME;
-		}
-		else if (c == KEYCODE_RIGHT) {
-			frameControlFlag = FRAME_FORWARD_ONE_FRAME;
-		}
 	}
 
 	// When everything done, release the video capture object
@@ -269,7 +275,32 @@ int main() {
 	destroyAllWindows();
 
 
-	SaveUVList(UVLOG_FILE,uvList);
+	SaveLog(UVLOG_FILE,logList);
 
 	return 0;
+}
+
+void ProcessMainLoopKeyEvent(bool & needQuit, FRAME_CONTROL & control)
+{
+	needQuit = false;
+	// Press  ESC on keyboard to exit
+	int c = (int)waitKeyEx(1);
+	//cout << (int)c <<endl;	
+	if (c == KEYCODE_ESCAP)
+	{
+		needQuit = true;
+		return;
+	}
+	else if (c == KEYCODE_SPACE) {
+		if (control == FRAME_PAUSE)
+			control = FRAME_PLAY;
+		else
+			control = FRAME_PAUSE;
+	}
+	else if (c == KEYCODE_LEFT) {
+		control = FRAME_BACKWARD_ONE_FRAME;
+	}
+	else if (c == KEYCODE_RIGHT) {
+		control = FRAME_FORWARD_ONE_FRAME;
+	}
 }

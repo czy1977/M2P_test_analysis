@@ -16,20 +16,20 @@ void InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params, floa
 	params->maxThreshold = 255;
 	params->minThreshold = 50;
 }
-
-void InitBlobParams(cv::SimpleBlobDetector::Params & params, float minSize, float maxSize, float minCircularity)
-{
-	params.minArea = minSize;
-	params.maxArea = maxSize;
-	params.filterByArea = true;
-	params.filterByCircularity = true;
-	params.minCircularity = minCircularity;
-	params.filterByInertia = false;
-	params.filterByConvexity = false;
-	params.minDistBetweenBlobs = 20;
-	params.maxThreshold = 255;
-	params.minThreshold = 50;
-}
+//
+//void InitBlobParams(cv::SimpleBlobDetector::Params & params, float minSize, float maxSize, float minCircularity)
+//{
+//	params.minArea = minSize;
+//	params.maxArea = maxSize;
+//	params.filterByArea = true;
+//	params.filterByCircularity = true;
+//	params.minCircularity = minCircularity;
+//	params.filterByInertia = false;
+//	params.filterByConvexity = false;
+//	params.minDistBetweenBlobs = 20;
+//	params.maxThreshold = 255;
+//	params.minThreshold = 50;
+//}
 
 bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> params, Mat src, vector<KeyPoint> &keypoints) {
 	float isFoundFlag;

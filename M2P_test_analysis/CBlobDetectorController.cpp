@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CBlobDetectorController.h"
 #include <opencv2/highgui.hpp>
-#define AREA_RANGE 1000
+#define AREA_RANGE 5000
 #define MINCIRCULARITY_RANGE 100
 
 void _CBlobDetectorController_UpdateCallBack( int pos,void* pdata) {

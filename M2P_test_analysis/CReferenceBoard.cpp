@@ -15,12 +15,17 @@ CReferenceBoard::~CReferenceBoard()
 {
 }
 
-cv::Matx33f CReferenceBoard::GetTrans(std::vector<cv::Point2f> input)
+cv::Matx33f CReferenceBoard::GetTransformation(std::vector<cv::Point2f> input)
 {
 	//return findHomography(refPoints, input);
 
 	return findHomography(input,refPoints );
 	
+}
+
+void CReferenceBoard::UpdateCurrentTransform(std::vector<cv::Point2f> input)
+{
+	homographyMatrix = GetTransformation(input);
 }
 
 cv::Size2f CReferenceBoard::GetSize()
@@ -30,7 +35,7 @@ cv::Size2f CReferenceBoard::GetSize()
 
 cv::Point2f CReferenceBoard::GetUVCoordinate(std::vector<cv::Point2f> projectedPoints, cv::Point2f referencePoint)
 {
-	cv::Matx33f m = GetTrans(projectedPoints);
+	cv::Matx33f m = GetTransformation(projectedPoints);
 	return GetUVCoordinate(m, referencePoint);
 }
 
@@ -53,6 +58,25 @@ cv::Point2f CReferenceBoard::GetReprojectedCoordinate(cv::Matx33f homography, cv
 	Matx33f invhomography;
 	vector<cv::Point2f> outputArr(1);
 	cv::invert(homography, invhomography);
+	cv::Point2f pixelPosInSrc(uv.x * BOARD_WIDTH, uv.y* BOARD_HEIGHT);
+	cv::perspectiveTransform(vector<cv::Point2f>({ pixelPosInSrc }), outputArr, invhomography);
+	return outputArr[0];
+}
+
+cv::Point2f CReferenceBoard::GetUVCoordinate(cv::Point2f referencePoint)
+{
+	vector<cv::Point2f> inputArr(1);
+	inputArr[0] = referencePoint;
+	vector<cv::Point2f> outputArr(1);
+	cv::perspectiveTransform(inputArr, outputArr, homographyMatrix);
+	return cv::Point2f(outputArr[0].x / BOARD_WIDTH, outputArr[0].y / BOARD_HEIGHT);
+}
+
+cv::Point2f CReferenceBoard::GetReprojectedCoordinate(cv::Point2f uv)
+{
+	Matx33f invhomography;
+	vector<cv::Point2f> outputArr(1);
+	cv::invert(homographyMatrix, invhomography);
 	cv::Point2f pixelPosInSrc(uv.x * BOARD_WIDTH, uv.y* BOARD_HEIGHT);
 	cv::perspectiveTransform(vector<cv::Point2f>({ pixelPosInSrc }), outputArr, invhomography);
 	return outputArr[0];
