@@ -2,6 +2,7 @@
 //
 
 #include "pch.h"
+#include "opencv.hpp"
 #include "opencv2/opencv.hpp"
 #include <iostream>
 #include "markerDetect.h"
@@ -80,7 +81,7 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
-Point2f  GetUVValue(CReferenceBoard refBoard,  Point2f pt) {
+Point2f  GetUVValue(CReferenceBoard & refBoard,  Point2f pt) {
 	return refBoard.GetUVCoordinate( pt);
 }
 void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
@@ -88,8 +89,11 @@ void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
 	std::ostringstream uvText;
 	uvText << std::setprecision(2);
 	uvText << uv.x << "," << uv.y;
-	putText(frame, uvText.str(), pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
-	return ;
+	std::string text = uvText.str();
+	cv::putText(frame, text, pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+}
+void DrawStartUV(Mat  frame, Point2f pt) {
+	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS, 40);
 }
 
 Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int maxNumber)
@@ -102,9 +106,7 @@ Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int maxNumber)
 	uv /= (float)count;
 	return uv;
 }
-void DrawStartUV(Mat frame, Point2f pt) {
-	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS,40);
-}
+
 
 void GetExpectedPositionFromMeanValue(std::list<cv::Point2f> &uvHistory, CReferenceBoard &refBoard,  cv::Point2f &reprojectedPoint)
 {
@@ -112,16 +114,18 @@ void GetExpectedPositionFromMeanValue(std::list<cv::Point2f> &uvHistory, CRefere
 	reprojectedPoint = refBoard.GetReprojectedCoordinate(uv);
 }
 
-void SaveLog( std::string path, list<LOG_INFO> uvList) {
+void SaveLog( std::string path, list<LOG_INFO> & logList) {
 	std::ofstream o(path, std::ofstream::trunc);
 	o << std::setprecision(6);
 	// output header
-	o << "u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+	o << "id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
-	for (auto it = uvList.begin(); it != uvList.end(); it++) {
+	for (auto it = logList.begin(); it != logList.end(); it++) {
+		int id = it->frameID;
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
+		o << id <<  " , ";
 		o << uv.x << " , " << uv.y << " , ";
 		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
 		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
@@ -130,11 +134,35 @@ void SaveLog( std::string path, list<LOG_INFO> uvList) {
 	o.close();
 }
 
+void PushLogEmpty(list<LOG_INFO> & logList, int frameID) {
+	LOG_INFO log;
+	log.frameID = frameID;
+	log.uv.x= log.uv.y= NAN;
+	log.realPositionInPixel.x = log.realPositionInPixel.y = NAN;
+	log.expectedPositionInPixel.x = log.expectedPositionInPixel.y = NAN;
+	logList.push_back(log);
+}
+void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expectedPosition) {
+	LOG_INFO log;
+	log.frameID = frameID;
+	log.uv.x = log.uv.y = NAN;
+	log.realPositionInPixel.x = log.realPositionInPixel.y = NAN;
+	log.expectedPositionInPixel=expectedPosition;
+	logList.push_back(log);
+}
+void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expectedPosition, const cv::Point2f & uv, const cv::Point2f & realPositionInPixel) {
+	LOG_INFO log;
+	log.frameID = frameID;
+	log.uv = uv;
+	log.realPositionInPixel = realPositionInPixel;
+	log.expectedPositionInPixel = expectedPosition;
+	logList.push_back(log);
+}
 
 int main() {
 	Mat frame;
 
-	std::list<LOG_INFO> logList;
+	std::list<LOG_INFO> reportLogList;
 	std::list<cv::Point2f> uvHistoryList;
 
 
@@ -168,17 +196,21 @@ int main() {
 		mouse_state.y = y;
 		mouse_state.flags = flags;
 	});
+	bool needQuit = false;
 	
-	
-	while (1) {
+	while (!needQuit) {
 
-		LOG_INFO stepLog;
+		
 		frame = GetVideoFrame(cap, frameControlFlag);
 		controlbar.UpdateStatus(cap);	
 
 
-		if (frame.empty())
-			break;
+		if (frame.empty()) {
+			
+			cout << "frame empty"<<endl;
+			continue;
+		}
+			
 		vector<KeyPoint> corners;
 		
 		
@@ -210,9 +242,9 @@ int main() {
 				}
 				
 			}
-		}
-		
-		if (corners.size() == 5) {
+			PushLogEmpty(reportLogList, controlbar.position);
+		}		
+		else if (corners.size() == 5) {
 			vector<int> hullID;
 			vector<Point2f> pt;
 			KeyPoint::convert(corners, pt);
@@ -239,20 +271,15 @@ int main() {
 				Point2f expectedPosition(0,0);
 				GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard,  expectedPosition);
 				Point2f centerPt(pt[centerID]);
+				PushLog(reportLogList,controlbar.position,uv, centerPt, expectedPosition);
+
 				DrawUVValue(frame, uv, centerPt);
-				
-				stepLog.uv = uv;
-				stepLog.realPositionInPixel = centerPt;
-				stepLog.expectedPositionInPixel = expectedPosition;
-				logList.push_back(stepLog);
-
-				
-
-				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f(mouse_state.x, mouse_state.y));
-					DrawUVValue(frame, uv, Point2f(mouse_state.x, mouse_state.y));
+				if (mouse_state.flags && EVENT_FLAG_LBUTTON) 
+				{
+					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x, (float)mouse_state.y));
+					DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
 				}
-			
+				
 				DrawStartUV(frame , expectedPosition);
 			}
 			else {
@@ -260,12 +287,12 @@ int main() {
 			}
 
 		}
+		else
+		{
+			//PushLog(reportLogList,controlbar.position);
+		}
 		imshow("Frame", frame);
-
-		bool needQuit = false;
 		ProcessMainLoopKeyEvent(needQuit, frameControlFlag);
-		if (needQuit) 
-			break;
 	}
 
 	// When everything done, release the video capture object
@@ -275,7 +302,7 @@ int main() {
 	destroyAllWindows();
 
 
-	SaveLog(UVLOG_FILE,logList);
+	SaveLog(UVLOG_FILE,reportLogList);
 
 	return 0;
 }

@@ -85,7 +85,6 @@
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>D:\dev\ORB_slam\opencv341\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
     <IncludePath>D:\dev\ORB_slam\opencv341\build\include\opencv2;D:\dev\ORB_slam\opencv341\build\include\opencv;D:\dev\ORB_slam\opencv341\build\include;$(IncludePath)</IncludePath>
-    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -148,6 +147,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
