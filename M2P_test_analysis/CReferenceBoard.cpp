@@ -2,8 +2,8 @@
 #include "CReferenceBoard.h"
 using namespace cv;
 using namespace std;
-#define BOARD_WIDTH 250.0f
-#define BOARD_HEIGHT 150.0f
+#define BOARD_WIDTH 250.0
+#define BOARD_HEIGHT 150.0
 
 CReferenceBoard::CReferenceBoard()
 {

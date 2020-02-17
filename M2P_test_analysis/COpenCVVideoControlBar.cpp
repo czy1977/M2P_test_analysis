@@ -10,10 +10,7 @@ void COpenCVVideoControlBar::dirty()
 COpenCVVideoControlBar::COpenCVVideoControlBar(std::string masterWindowName):
 	windowName(masterWindowName), 
 	firstInit(true),
-	updating(false),
-	needUpdate(false),
-	position(0),
-	count(0)
+	updating(false)
 {
 	cv::createTrackbar(TRACKBAR_NAME, masterWindowName, &position, 100, [](int pos, void* pdata)-> void {
 		COpenCVVideoControlBar * pInstance = static_cast <COpenCVVideoControlBar*>(pdata);

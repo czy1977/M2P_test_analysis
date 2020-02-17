@@ -48,7 +48,7 @@ bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> 
 	// std::vector<KeyPoint> keypoints;
 	detector->detect(invImg, keypoints);
 	
-	//cout << keypoints.size() << endl;
+	cout << keypoints.size() << endl;
 
 #ifdef DEBUG
 	Mat im_with_keypoints;
