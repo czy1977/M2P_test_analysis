@@ -15,6 +15,7 @@
 #define MAIN_WINDOW_NAME "Frame"
 #define UV_AVRAGE_NUMBER 20
 
+
 #define KEYCODE_ESCAP 27
 #define KEYCODE_SPACE 32
 #define KEYCODE_LEFT 2424832
@@ -30,11 +31,15 @@ float minCircularity = 0.7f;
 
 
 #define VIDEO_FILE ("C0001-converted.mp4")
-#define UVLOG_FILE ("log.csv")
+#define UVLOG_FILE ("log1.csv")
 
-//#define VIDEO_FILE ("C0008.mp4")
-//#define UVLOG_FILE ("log8.csv")
-#define VIDEO_START_FRAME (400)
+#define VIDEO_FILE ("C0013.mp4")
+#define UVLOG_FILE ("log13.csv")
+#define VIDEO_START_FRAME (200)
+
+#define LOG_FORMAT_VERSION 1 
+
+
 
 struct MOUSE_STATE {
 	int event;
@@ -114,9 +119,31 @@ void GetExpectedPositionFromMeanValue(std::list<cv::Point2f> &uvHistory, CRefere
 	reprojectedPoint = refBoard.GetReprojectedCoordinate(uv);
 }
 
+
+
 void SaveLog( std::string path, list<LOG_INFO> & logList) {
 	std::ofstream o(path, std::ofstream::trunc);
 	o << std::setprecision(6);
+
+#if LOG_FORMAT_VERSION==1
+	// output header
+	o << "u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+
+	for (auto it = logList.begin(); it != logList.end(); it++) {
+		int id = it->frameID;
+		Point2f uv = it->uv;
+		cv::Point2f realPositionInPixel = it->realPositionInPixel;
+		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
+		if (isnan(uv.x))
+			continue;
+		o << uv.x << " , " << uv.y << " , ";
+		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
+		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
+		o << std::endl;
+}
+#endif // LOG_FORMAT_VERSION==1
+
+#if LOG_FORMAT_VERSION==2
 	// output header
 	o << "id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
@@ -125,12 +152,14 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
-		o << id <<  " , ";
+		o << id << " , ";
 		o << uv.x << " , " << uv.y << " , ";
 		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
 		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
-		o<< std::endl;
+		o << std::endl;
 	}
+#endif // LOG_FORMAT_VERSION==2
+
 	o.close();
 }
 
@@ -150,7 +179,7 @@ void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expected
 	log.expectedPositionInPixel=expectedPosition;
 	logList.push_back(log);
 }
-void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expectedPosition, const cv::Point2f & uv, const cv::Point2f & realPositionInPixel) {
+void PushLog(list<LOG_INFO> & logList, int frameID,const cv::Point2f & uv, const cv::Point2f & realPositionInPixel, const cv::Point2f & expectedPosition ) {
 	LOG_INFO log;
 	log.frameID = frameID;
 	log.uv = uv;
@@ -208,7 +237,7 @@ int main() {
 		if (frame.empty()) {
 			
 			cout << "frame empty"<<endl;
-			continue;
+			break;
 		}
 			
 		vector<KeyPoint> corners;
