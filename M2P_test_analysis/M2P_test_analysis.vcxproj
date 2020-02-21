@@ -163,6 +163,7 @@
     <ClInclude Include="CReferenceBoard.h" />
     <ClInclude Include="M2P_test_analysis.h" />
     <ClInclude Include="markerDetect.h" />
+    <ClInclude Include="MarkerDetectInROI.h" />
     <ClInclude Include="OCVInterface.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="CReferenceBoard.cpp" />
     <ClCompile Include="M2P_test_analysis.cpp" />
     <ClCompile Include="markerDetect.cpp" />
+    <ClCompile Include="MarkerDetectInROI.cpp" />
     <ClCompile Include="OCVInterface.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

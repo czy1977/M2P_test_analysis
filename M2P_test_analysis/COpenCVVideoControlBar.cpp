@@ -11,7 +11,6 @@ COpenCVVideoControlBar::COpenCVVideoControlBar(std::string masterWindowName):
 	windowName(masterWindowName), 
 	firstInit(true),
 	updating(false),
-	needUpdate(false),
 	position(0),
 	count(0)
 {
@@ -45,8 +44,8 @@ void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 	else if(firstInit)
 	{
 
-		count = cap.get(CV_CAP_PROP_FRAME_COUNT);
-		position = cap.get(CV_CAP_PROP_POS_FRAMES);
+		count = (int)cap.get(CV_CAP_PROP_FRAME_COUNT);
+		position = (int)cap.get(CV_CAP_PROP_POS_FRAMES);
 		updating = true;
 		cv::setTrackbarMax(TRACKBAR_NAME, windowName, count);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
@@ -56,7 +55,7 @@ void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 	else
 	{
 		updating = true;
-		position = cap.get(CV_CAP_PROP_POS_FRAMES);
+		position = (int)cap.get(CV_CAP_PROP_POS_FRAMES);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
 	}
 

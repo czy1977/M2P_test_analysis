@@ -18,11 +18,9 @@ typedef struct {
 
 Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int maxNumber);
 
+void DrawStartUV(Mat frame,  cv::Point2f pt);
 
 void GetExpectedPositionFromMeanValue(std::list<cv::Point2f>& uvHistory, CReferenceBoard & refBoard, cv::Point2f & reprojectedPoint);
 
 
 void ProcessMainLoopKeyEvent(bool & needQuit, FRAME_CONTROL & control);
-void PushLogEmpty(list<LOG_INFO> & logList, int frameID);
-void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expectedPosition);
-void PushLog(list<LOG_INFO> & logList, int frameID, const cv::Point2f & expectedPosition, const cv::Point2f & uv, const cv::Point2f & realPositionInPixel);

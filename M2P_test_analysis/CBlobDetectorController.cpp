@@ -48,7 +48,7 @@ void CBlobDetectorController::open(std::shared_ptr<cv::SimpleBlobDetector::Param
 		CBlobDetectorController * pInstance = static_cast <CBlobDetectorController*>(pdata);
 		if (NULL != pInstance)
 		{
-			pInstance->targetParameter->minArea = pos;
+			pInstance->targetParameter->minArea = (float)pos;
 			pInstance->dirty();
 		}
 	}, this);
@@ -58,7 +58,7 @@ void CBlobDetectorController::open(std::shared_ptr<cv::SimpleBlobDetector::Param
 		CBlobDetectorController * pInstance = static_cast <CBlobDetectorController*>(pdata);
 		if (NULL != pInstance)
 		{
-			pInstance->targetParameter->maxArea = pos;
+			pInstance->targetParameter->maxArea = (float)pos;
 			pInstance->dirty();
 		}
 	}, this);

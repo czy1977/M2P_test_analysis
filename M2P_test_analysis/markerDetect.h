@@ -1,6 +1,7 @@
 #pragma once
 #include <opencv.hpp>
 #include <iostream>
+#include <memory>
 
 using namespace std;
 using namespace cv;
