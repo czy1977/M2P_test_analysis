@@ -1,6 +1,5 @@
 #pragma once
-#include <opencv.hpp>
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 class COpenCVVideoControlBar
 {
 private:

@@ -2,8 +2,7 @@
 //
 
 #include "pch.h"
-#include "opencv.hpp"
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include "markerDetect.h"
 #include "OCVInterface.h"
@@ -16,11 +15,21 @@
 #define UV_AVRAGE_NUMBER 20
 
 
+#ifdef __linux__
+
+#define KEYCODE_ESCAP 1048603
+#define KEYCODE_SPACE 1048608
+#define KEYCODE_LEFT 1113937
+#define KEYCODE_RIGHT 1113939
+
+#else
+
 #define KEYCODE_ESCAP 27
 #define KEYCODE_SPACE 32
 #define KEYCODE_LEFT 2424832
 #define KEYCODE_RIGHT 2555904
 
+#endif
 
 using namespace std;
 using namespace cv;
@@ -152,10 +161,10 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
-		o << id << " , ";
-		o << uv.x << " , " << uv.y << " , ";
-		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
-		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
+		o << id <<  ",";
+		o << uv.x << "," << uv.y << ",";
+		o << realPositionInPixel.x << "," << realPositionInPixel.y << ",";
+		o << expectedPositionInPixel.x << "," << expectedPositionInPixel.y;
 		o << std::endl;
 	}
 #endif // LOG_FORMAT_VERSION==2
@@ -188,7 +197,7 @@ void PushLog(list<LOG_INFO> & logList, int frameID,const cv::Point2f & uv, const
 	logList.push_back(log);
 }
 
-int main() {
+int main(int argc, char** argv) {
 	Mat frame;
 
 	std::list<LOG_INFO> reportLogList;
@@ -197,14 +206,21 @@ int main() {
 
 	CReferenceBoard renderenceBoard;
 
-	VideoCapture cap(VIDEO_FILE);
+  std::string videoFile = VIDEO_FILE;
+  if (argc>1) {
+    videoFile = argv[1];
+  }
+
+  cout << "Read video: " << videoFile << endl;
+
+  VideoCapture cap(videoFile);
 	//frame = GetVideoFrame(cap, frameControlFlag);
 	
 	cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
 	frameControlFlag = FRAME_PLAY;
 	if (!cap.isOpened()) {
 		
-		cout << "Error opening video stream or file" << endl;
+    cout << "Error opening video stream or file : " << videoFile << endl;
 		return -1;
 	}
 

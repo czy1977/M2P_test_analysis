@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "OCVInterface.h"
 
+using namespace cv;
 
 void ocvi::Reproject3Dto2D(Mat pt3D, Mat R, Mat T, Mat intriMat, Mat &outputPt2D) {
 	// This function is to reproject 3d point in camera coordinate system (CCS) to 2d point in image coordinate system (ICS).
@@ -19,7 +20,7 @@ void ocvi::Reproject3Dto2D(Mat pt3D, Mat R, Mat T, Mat intriMat, Mat &outputPt2D
 		pt3D_ = intriMat*(R* pt3D_.t() + T);
 		homoPtICS.row(i) = pt3D_.t();
 	}
-	vector<Point2f> point2D;
+  std::vector<Point2f> point2D;
 	convertPointsFromHomogeneous(homoPtICS, point2D);
 	outputPt2D = Mat(point2D).clone();
 }
@@ -35,7 +36,7 @@ void ocvi::PlotPts(Mat src, Mat pt2D, Scalar color, float radius) {
 	}
 }
 
-Mat ocvi::ConvertPt3D2Mat(vector<Point3f> pt3D) {
+Mat ocvi::ConvertPt3D2Mat(std::vector<Point3f> pt3D) {
 	// This function is to convert pt3D to Mat.
 	// parameters:
 	// pt3D is a Point3f vector
@@ -50,7 +51,7 @@ Mat ocvi::ConvertPt3D2Mat(vector<Point3f> pt3D) {
 	return outputPt3D;
 }
 
-Mat ocvi::ConvertPt2D2Mat(vector<Point2f> pt2D) {
+Mat ocvi::ConvertPt2D2Mat(std::vector<Point2f> pt2D) {
 // This function is to convert pt2D to Mat.
 // parameters:
 // pt2D is a Point3f vector
@@ -159,13 +160,13 @@ void ocvi::TriangulatePoints(Mat intriMatL, Mat intriMatR, Mat R, Mat T,
 	// opencv method
 	Mat point4DMat;
 	triangulatePoints(projMatrixL, projMatrixR, pt2DL, pt2DR, point4DMat);
-	vector<Point3f> point3DVec;
+  std::vector<Point3f> point3DVec;
 	convertPointsFromHomogeneous(point4DMat.t(), point3DVec);
 	pt3D = ocvi::ConvertPt3D2Mat(point3DVec);
 	
 }
 
-void ocvi::NormInRows(Mat m1, Mat m2, vector<float> &dist) {
+void ocvi::NormInRows(Mat m1, Mat m2, std::vector<float> &dist) {
 	// This function is to calculate the distance between two n*2 or n*3 matrix, which will output an n*1 diatance list .
 	// parameters:
 	// m1 is a n*2 or n*3 matrix
@@ -204,7 +205,7 @@ void ocvi::Reproject2Dto2D(Mat pt2D, Mat H, Mat &outputPt2D) {
 		nonHomoPt2D.row(i) = temp0.t();
 	}
 
-	vector<Point2f> point2D;
+  std::vector<Point2f> point2D;
 	convertPointsFromHomogeneous(nonHomoPt2D, point2D);
 	outputPt2D = Mat(point2D).clone();
 }

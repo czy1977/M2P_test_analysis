@@ -1,7 +1,10 @@
+#include <memory>
+
 #include "pch.h"
 #include "markerDetect.h"
 //#define DEBUG
 
+using namespace cv;
 
 void InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params, float minSize, float maxSize, float minCircularity)
 {
@@ -31,7 +34,7 @@ void InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params, floa
 //	params.minThreshold = 50;
 //}
 
-bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> params, Mat src, vector<KeyPoint> &keypoints) {
+bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> params, Mat src, std::vector<KeyPoint> &keypoints) {
 	float isFoundFlag;
 	Mat gray;
 	cvtColor(src, gray, CV_RGB2GRAY);

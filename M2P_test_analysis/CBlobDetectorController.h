@@ -1,5 +1,7 @@
 #pragma once
-#include <opencv.hpp>
+#include <opencv2/opencv.hpp>
+#include <memory>
+
 class CBlobDetectorController
 {
 	friend void _CBlobDetectorController_UpdateCallBack(int pos, void* pdata);
