@@ -34,7 +34,7 @@ float minCircularity = 0.7f;
 //#define VIDEO_FILE ("C0001-converted.mp4")
 //#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("C0013.mp4")
+#define VIDEO_FILE ("video/C0013.mp4")
 #define UVLOG_FILE ("log13.csv")
 
 
@@ -88,6 +88,7 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
+
 Point2f  GetUVValue(CReferenceBoard & refBoard,  Point2f pt) {
 	return refBoard.GetUVCoordinate( pt);
 }
@@ -231,7 +232,6 @@ int main() {
 		frame = GetVideoFrame(cap, frameControlFlag);
 		controlbar.UpdateStatus(cap);	
 
-
 	
 		if (frame.empty()) {
 			
@@ -243,7 +243,10 @@ int main() {
 		
 		
 		bool isFoundFlag =false;
-			isFoundFlag = mdROI->FindMarkers(blobparams, frame);
+		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
+		int roiSize = 80;
+		int marginSize = 10;
+		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
 
 
 		if (mdROI->cornerNum == 4) {
@@ -322,6 +325,7 @@ int main() {
 	destroyAllWindows();
 
 
+	SaveLog(UVLOG_FILE,reportLogList);
 
 	delete mdROI;
 	system("pause");

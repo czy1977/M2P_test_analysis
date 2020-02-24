@@ -1,8 +1,6 @@
-#include "pch.h"
 #include "MarkerDetectInROI.h"
-#include "COpenCVShowManyImages.h"
+
 //#define DEBUG
-//#define SHOW_DEBUG_IMAGE
 
 MarkerDetectInROI::MarkerDetectInROI()
 {
@@ -48,7 +46,7 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 	waitKey(0);
 #endif // DEBUG
 
-	int tempCornerNum = (int)pt.size();
+	int tempCornerNum = pt.size();
 	if (tempCornerNum == 4) {
 		vector<int> hullID;
 		convexHull(pt, hullID, false, false);
@@ -114,7 +112,7 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	//float thd = 10;
 	vector<KeyPoint> tempKpt;
 	vector<Point2f> pt;
-
+	float isFoundFlag;
 	Mat gray;
 	cvtColor(src, gray, CV_RGB2GRAY);
 	//GaussianBlur(img, img, Size(), 0.5, 0.5);
@@ -123,16 +121,12 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params1);
 	vector<Point2f> candidatePts;
-	vector<Mat> tempMat(4);
 	for (int i = 0; i < 4; i++) {
-		
-		GetROI(invImg, tempMat[i], corners[i], roiSize);
-
-		detector->detect(tempMat[i], tempKpt);
-#ifdef SHOW_DEBUG_IMAGE
-		//static const char* debug_window_name[] = {"MarkerDetectInROI_0","MarkerDetectInROI_1","MarkerDetectInROI_2","MarkerDetectInROI_3" };
-		//imshow(debug_window_name[i], tempMat);
-#endif
+		Mat tempMat;
+		GetROI(invImg, tempMat, corners[i], roiSize);
+		//imshow("1", tempMat);
+		//waitKey(0);
+		detector->detect(tempMat, tempKpt);
 		KeyPoint::convert(tempKpt, pt);
 		if (pt.size() == 1) {
 			pt[0].x = corners[i].x + pt[0].x - roiSize / 2;
@@ -144,9 +138,6 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 			break;
 		}
 	}
-#ifdef SHOW_DEBUG_IMAGE
-	COpenCVShowManyImages::ShowManyImages(tempMat,Size(roiSize, roiSize));
-#endif
 	
 	if (candidatePts.size() == 4) {
 		corners=candidatePts;
@@ -284,3 +275,4 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	}
 	
 }
+
