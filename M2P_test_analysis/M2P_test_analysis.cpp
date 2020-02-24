@@ -187,7 +187,9 @@ int main() {
 		
 		bool isFoundFlag =false;
 		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
-		isFoundFlag = mdROI->FindMarkers(blobparams, frame);
+		int roiSize = 80;
+		int marginSize = 10;
+		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
 
 
 		if (mdROI->cornerNum == 4) {
