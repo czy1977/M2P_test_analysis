@@ -12,7 +12,8 @@ COpenCVVideoControlBar::COpenCVVideoControlBar(std::string masterWindowName):
 	firstInit(true),
 	updating(false),
 	position(0),
-	count(0)
+	count(0),
+	needUpdate(false)
 {
 	cv::createTrackbar(TRACKBAR_NAME, masterWindowName, &position, 100, [](int pos, void* pdata)-> void {
 		COpenCVVideoControlBar * pInstance = static_cast <COpenCVVideoControlBar*>(pdata);
