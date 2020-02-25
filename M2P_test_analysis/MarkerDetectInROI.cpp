@@ -5,6 +5,8 @@
 //#define DEBUG
 //#define SHOW_DEBUG_IMAGE
 
+#define RUN_MULTI_THREAD 1
+
 MarkerDetectInROI::MarkerDetectInROI()
 {
 	cornerNum = 0;
@@ -125,22 +127,25 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	bool foundMark = false;
 	vector<bool> foundMarkFlags(4);
 	vector<Mat> tempMat(4);
+
+	
+
+
+#if RUN_MULTI_THREAD
 	vector<std::thread> threads(4);
 	for (int i = 0; i < 4; i++) {
-		
-		//std::thread();
-		DecetROI(invImg,corners, i, roiSize, *params1, candidatePts, foundMarkFlags);
-#ifdef SHOW_DEBUG_IMAGE
-		//static const char* debug_window_name[] = {"MarkerDetectInROI_0","MarkerDetectInROI_1","MarkerDetectInROI_2","MarkerDetectInROI_3" };
-		//imshow(debug_window_name[i], tempMat);
-#endif
-		
-
+		threads[i] = std::thread(MarkerDetectInROI::DecetROI, ref(invImg),ref( corners), i, roiSize, ref(*params1), ref(candidatePts), ref(foundMarkFlags));
 	}
-#ifdef SHOW_DEBUG_IMAGE
-	COpenCVShowManyImages::ShowManyImages(tempMat,Size(roiSize, roiSize));
-#endif
-	;
+	for (int i = 0; i < 4; i++) {
+		threads[i].join();
+	}
+#else
+	for (int i = 0; i < 4; i++) {
+		DecetROI(invImg,corners, i, roiSize, *params1, candidatePts, foundMarkFlags);
+	}
+#endif // RUN_MULTI_THREAD
+
+	
 	if (std::all_of(foundMarkFlags.begin(), foundMarkFlags.end(), [](bool value) {return value; })) {
 		corners=candidatePts;
 		Point2f centerPt;
