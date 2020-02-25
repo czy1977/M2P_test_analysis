@@ -114,15 +114,7 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector::Params> params1,
 	std::shared_ptr<cv::SimpleBlobDetector::Params> params2,
 	Mat src, int roiSize, int marginSize) {
-	//float thd = 10;
 
-	Mat gray;
-	cvtColor(src, gray, CV_RGB2GRAY);
-	//GaussianBlur(img, img, Size(), 0.5, 0.5);
-	Mat invImg = 255 * Mat::ones(gray.size(), CV_8U);
-	invImg = invImg - gray;
-	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
-	//Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params1);
 	vector<Point2f> candidatePts(4);
 	bool foundMark = false;
 	vector<bool> foundMarkFlags(4);
@@ -134,7 +126,7 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 #if RUN_MULTI_THREAD
 	vector<std::thread> threads(4);
 	for (int i = 0; i < 4; i++) {
-		threads[i] = std::thread(MarkerDetectInROI::DecetROI, ref(invImg),ref( corners), i, roiSize, ref(*params1), ref(candidatePts), ref(foundMarkFlags));
+		threads[i] = std::thread(MarkerDetectInROI::DecetROI, ref(src),ref( corners), i, roiSize, ref(*params1), ref(candidatePts), ref(foundMarkFlags));
 	}
 	for (int i = 0; i < 4; i++) {
 		threads[i].join();
@@ -169,13 +161,16 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	
 }
 
-void MarkerDetectInROI::DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, const cv::SimpleBlobDetector::Params& parameters, vector<Point2f> & candidatePts, vector<bool> & foundMark)
+void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> & corners, int i, int roiSize, const cv::SimpleBlobDetector::Params& parameters, vector<Point2f> & candidatePts, vector<bool> & foundMark)
 {
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(parameters);
 	vector<KeyPoint> tempKpt;
 	vector<Point2f> pt;
-	Mat tempMat;
-	GetROI(invImg, tempMat, corners[i], roiSize);
+	Mat tempMatColor, tempMat;
+	GetROI(srcImg, tempMatColor, corners[i], roiSize);
+	Mat gray;
+	cvtColor(tempMatColor, gray, CV_RGB2GRAY);
+	tempMat = 255 - gray;
 	detector->detect(tempMat, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {
@@ -275,12 +270,7 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	int thd, Mat src, vector<Point2f> pts, Point2f &centerPt) {
 	vector<KeyPoint> tempKpt;
 	vector<Point2f> pt;
-	float isFoundFlag;
 	Mat gray;
-	cvtColor(src, gray, CV_RGB2GRAY);
-	//GaussianBlur(img, img, Size(), 0.5, 0.5);
-	Mat invImg = 255 * Mat::ones(gray.size(), CV_8U);
-	invImg = invImg - gray;
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params);
 	//float thd = 100;
@@ -288,7 +278,9 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	int p1x = max(pts[1].x+thd, pts[2].x+thd);
 	int p2y = min(pts[2].y-thd, pts[3].y-thd);
 	int p2x = min(pts[0].x-thd, pts[3].x-thd);
-	Mat ROI = invImg(cv::Rect(p1x, p1y, p2x - p1x, p2y - p1y));
+	Mat srcROI = src(cv::Rect(p1x, p1y, p2x - p1x, p2y - p1y));
+	cvtColor(srcROI, gray, CV_RGB2GRAY);
+	Mat ROI = 255 - gray;;
 	detector->detect(ROI, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {

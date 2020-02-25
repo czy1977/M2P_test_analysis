@@ -41,9 +41,13 @@ float minCircularity = 0.7f;
 
 
 #define VIDEO_START_FRAME (200)
+#define VIDEO_END_FRAME (300000)
 #define LOG_FORMAT_VERSION 1 
 
 #define OUTPUT_FPS
+#define RUN_EMPTY_LOOP 0
+
+#define SKIP_DRAWING 0
 
 struct MOUSE_STATE {
 	int event;
@@ -95,7 +99,9 @@ Point2f  GetUVValue(CReferenceBoard & refBoard,  Point2f pt) {
 	return refBoard.GetUVCoordinate( pt);
 }
 void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
-	
+#if SKIP_DRAWING
+	return;
+#endif // SKIP_DRAWING
 	std::ostringstream uvText;
 	uvText << std::setprecision(2);
 	uvText << uv.x << "," << uv.y;
@@ -103,6 +109,10 @@ void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
 	cv::putText(frame, text, pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
 }
 void DrawStartUV(Mat  frame, Point2f pt) {
+#if SKIP_DRAWING
+	return;
+#endif // SKIP_DRAWING
+
 	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS, 40);
 }
 
@@ -245,11 +255,21 @@ int main() {
 		controlbar.UpdateStatus(cap);	
 
 	
+		if (controlbar.position > VIDEO_END_FRAME) {
+			cout << "reach to max frame" << endl;
+			break;
+		}
 		if (frame.empty()) {
 			
 			cout << "frame empty"<<endl;
 			break;
 		}
+#if RUN_EMPTY_LOOP
+		imshow("Frame", frame);
+		continue;
+#endif // RUN_EMPTY_LOOP
+
+		
 		
 		vector<KeyPoint> corners;
 		
@@ -262,6 +282,8 @@ int main() {
 
 
 		if (mdROI->cornerNum == 4) {
+#if SKIP_DRAWING
+#else
 			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
 			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
 			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
@@ -270,6 +292,8 @@ int main() {
 			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
 			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
 			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+#endif // SKIP_DRAWING
+
 
 			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 			renderenceBoard.UpdateCurrentTransform(inputArray);
@@ -285,16 +309,19 @@ int main() {
 			PushLog(reportLogList, controlbar.position, expectedPosition);
 		}		
 		else if (mdROI->cornerNum == 5) {
+#if SKIP_DRAWING
+#else
+			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
+#endif // SKIP_DRAWING
 
-				putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
-				circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
-				circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
-				circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
-				circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
 
 				vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 				renderenceBoard.UpdateCurrentTransform(inputArray);
@@ -346,7 +373,7 @@ int main() {
 	SaveLog(UVLOG_FILE,reportLogList);
 
 	delete mdROI;
-	system("pause");
+	//system("pause");
 	return 0;
 }
 
