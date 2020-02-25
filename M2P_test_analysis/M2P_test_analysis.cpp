@@ -33,11 +33,11 @@ float minBlobSize = 200;
 float minCircularity = 0.7f;
 
 
-#define VIDEO_FILE ("C0001-converted.mp4")
-#define UVLOG_FILE ("log1.csv")
+//#define VIDEO_FILE ("C0001-converted.mp4")
+//#define UVLOG_FILE ("log1.csv")
 
-//#define VIDEO_FILE ("video/C0017.mp4")
-//#define UVLOG_FILE ("M2P_test_analysis_python/logs/log_temp.csv")
+#define VIDEO_FILE ("video/C0017.mp4")
+#define UVLOG_FILE ("M2P_test_analysis_python/logs/log_temp.csv")
 
 
 #define VIDEO_START_FRAME (200)
@@ -238,6 +238,7 @@ int main() {
 #ifdef OUTPUT_FPS
 		cout << "FPS is:" << CLOCKS_PER_SEC/ (double)(currentTime - lastTime) << endl;		
 #endif // OUTPUT_FPS
+		lastTime = currentTime;
 
 
 		frame = GetVideoFrame(cap, frameControlFlag);
@@ -249,7 +250,7 @@ int main() {
 			cout << "frame empty"<<endl;
 			break;
 		}
-			
+		
 		vector<KeyPoint> corners;
 		
 		
@@ -331,7 +332,7 @@ int main() {
 		std::clock_t finishTime = clock();
 		cout << " The run time is:" << (double)( finishTime - currentTime ) / CLOCKS_PER_SEC *1000 << "ms" << endl;
 #endif // OUTPUT_FPS
-		lastTime = currentTime;
+		
 		
 	}
 

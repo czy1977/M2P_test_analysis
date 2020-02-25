@@ -120,7 +120,7 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	Mat invImg = 255 * Mat::ones(gray.size(), CV_8U);
 	invImg = invImg - gray;
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
-	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params1);
+	//Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params1);
 	vector<Point2f> candidatePts(4);
 	bool foundMark = false;
 	vector<bool> foundMarkFlags(4);
@@ -129,7 +129,7 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	for (int i = 0; i < 4; i++) {
 		
 		//std::thread();
-		DecetROI(invImg,corners, i, roiSize, detector, candidatePts, foundMarkFlags);
+		DecetROI(invImg,corners, i, roiSize, *params1, candidatePts, foundMarkFlags);
 #ifdef SHOW_DEBUG_IMAGE
 		//static const char* debug_window_name[] = {"MarkerDetectInROI_0","MarkerDetectInROI_1","MarkerDetectInROI_2","MarkerDetectInROI_3" };
 		//imshow(debug_window_name[i], tempMat);
@@ -164,8 +164,9 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	
 }
 
-void MarkerDetectInROI::DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, cv::Ptr<cv::SimpleBlobDetector> &detector, vector<Point2f> & candidatePts, vector<bool> & foundMark)
+void MarkerDetectInROI::DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, const cv::SimpleBlobDetector::Params& parameters, vector<Point2f> & candidatePts, vector<bool> & foundMark)
 {
+	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(parameters);
 	vector<KeyPoint> tempKpt;
 	vector<Point2f> pt;
 	Mat tempMat;

@@ -18,7 +18,7 @@ public:
 	bool FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector::Params> params1, 
 		std::shared_ptr<cv::SimpleBlobDetector::Params> params2, 
 		Mat src, int roiSize, int marginSize);
-	static void DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, cv::Ptr<cv::SimpleBlobDetector> &detector, vector<Point2f> & candidatePts, vector<bool> & foundMark);
+	static void DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, const cv::SimpleBlobDetector::Params& parameters, vector<Point2f> & candidatePts, vector<bool> & foundMark);
 	bool FindMarkers(std::shared_ptr<cv::SimpleBlobDetector::Params> params1,
 		std::shared_ptr<cv::SimpleBlobDetector::Params> params2,
 		Mat src, int roiSize, int marginSize);
