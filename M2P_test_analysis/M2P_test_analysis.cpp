@@ -31,11 +31,11 @@ float minBlobSize = 200;
 float minCircularity = 0.7f;
 
 
-//#define VIDEO_FILE ("C0001-converted.mp4")
-//#define UVLOG_FILE ("log1.csv")
+#define VIDEO_FILE ("C0001-converted.mp4")
+#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("video/C0013.mp4")
-#define UVLOG_FILE ("log13.csv")
+//#define VIDEO_FILE ("video/C0017.mp4")
+//#define UVLOG_FILE ("M2P_test_analysis_python/logs/log_temp.csv")
 
 
 #define VIDEO_START_FRAME (200)
@@ -129,7 +129,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 #if LOG_FORMAT_VERSION==1
 	// output header
-	o << "u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+	o << "frame_id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
 	for (auto it = logList.begin(); it != logList.end(); it++) {
 		int id = it->frameID;
@@ -138,6 +138,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
 		if (isnan(uv.x))
 			continue;
+		o << id << " , ";
 		o << uv.x << " , " << uv.y << " , ";
 		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
 		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
@@ -147,12 +148,13 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 #if LOG_FORMAT_VERSION==2
 	// output header
-	o << "id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+	o << "frame_id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
 	for (auto it = logList.begin(); it != logList.end(); it++) {
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
+		o << id << " , ";
 		o << uv.x << " , " << uv.y << " , ";
 		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
 		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
@@ -245,7 +247,7 @@ int main() {
 		bool isFoundFlag =false;
 		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
 		int roiSize = 80;
-		int marginSize = 10;
+		int marginSize = 20;
 		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
 
 

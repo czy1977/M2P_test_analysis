@@ -18,6 +18,7 @@ public:
 	bool FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector::Params> params1, 
 		std::shared_ptr<cv::SimpleBlobDetector::Params> params2, 
 		Mat src, int roiSize, int marginSize);
+	static void DecetROI(const cv::Mat &invImg, const vector<Point2f> & corners, int i, int roiSize, cv::Ptr<cv::SimpleBlobDetector> &detector, vector<Point2f> & candidatePts, vector<bool> & foundMark);
 	bool FindMarkers(std::shared_ptr<cv::SimpleBlobDetector::Params> params1,
 		std::shared_ptr<cv::SimpleBlobDetector::Params> params2,
 		Mat src, int roiSize, int marginSize);
@@ -25,7 +26,7 @@ public:
 	
 	void OrderCorners(vector<Point2f> orgCorners, vector<Point2f> &orderedCorners);
 	bool IsRec(vector<Point2f> &orderedCorners, float thd);
-	void GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize);
+	static void GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize);
 	bool FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector::Params> params, int thd,
 		Mat src, vector<Point2f> pts, Point2f &centerPt);
 };
