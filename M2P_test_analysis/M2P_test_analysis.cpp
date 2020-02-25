@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <memory>
+#include <ctime>
 #include "opencv2/opencv.hpp"
 #include <iostream>
 #include "markerDetect.h"
@@ -12,6 +13,7 @@
 #include "CReferenceBoard.h"
 #include "M2P_test_analysis.h"
 #include "MarkerDetectInROI.h"
+
 
 #define MAIN_WINDOW_NAME "Frame"
 #define UV_AVRAGE_NUMBER 20
@@ -41,7 +43,7 @@ float minCircularity = 0.7f;
 #define VIDEO_START_FRAME (200)
 #define LOG_FORMAT_VERSION 1 
 
-
+#define OUTPUT_FPS
 
 struct MOUSE_STATE {
 	int event;
@@ -228,8 +230,15 @@ int main() {
 		mouse_state.flags = flags;
 	});
 	bool needQuit = false;
-	
+	std::clock_t lastTime = clock();
+
 	while (!needQuit) {
+
+		std::clock_t currentTime = clock();
+#ifdef OUTPUT_FPS
+		cout << "FPS is:" << CLOCKS_PER_SEC/ (double)(currentTime - lastTime) << endl;		
+#endif // OUTPUT_FPS
+
 
 		frame = GetVideoFrame(cap, frameControlFlag);
 		controlbar.UpdateStatus(cap);	
@@ -318,6 +327,12 @@ int main() {
 		ProcessMainLoopKeyEvent(needQuit, frameControlFlag);
 		if (needQuit) 
 			break;
+#ifdef OUTPUT_FPS
+		std::clock_t finishTime = clock();
+		cout << " The run time is:" << (double)( finishTime - currentTime ) / CLOCKS_PER_SEC *1000 << "ms" << endl;
+#endif // OUTPUT_FPS
+		lastTime = currentTime;
+		
 	}
 
 	// When everything done, release the video capture object
