@@ -39,6 +39,12 @@
     <ClInclude Include="M2P_test_analysis.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MarkerDetectInROI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="COpenCVShowManyImages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -60,6 +66,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CReferenceBoard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MarkerDetectInROI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="COpenCVShowManyImages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

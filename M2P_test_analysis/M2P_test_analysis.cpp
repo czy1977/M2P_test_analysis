@@ -2,6 +2,8 @@
 //
 
 #include "pch.h"
+#include <memory>
+#include <ctime>
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include "markerDetect.h"
@@ -10,6 +12,8 @@
 #include "COpenCVVideoControlBar.h"
 #include "CReferenceBoard.h"
 #include "M2P_test_analysis.h"
+#include "MarkerDetectInROI.h"
+
 
 #define MAIN_WINDOW_NAME "Frame"
 #define UV_AVRAGE_NUMBER 20
@@ -39,16 +43,21 @@ float minBlobSize = 200;
 float minCircularity = 0.7f;
 
 
-#define VIDEO_FILE ("C0001-converted.mp4")
-#define UVLOG_FILE ("log1.csv")
+//#define VIDEO_FILE ("C0001-converted.mp4")
+//#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("C0013.mp4")
-#define UVLOG_FILE ("log13.csv")
+#define VIDEO_FILE ("video/C0017.mp4")
+#define UVLOG_FILE ("/home/simeon/dvp/lenovo/build/m2p_test/log_temp.csv")
+
+
 #define VIDEO_START_FRAME (200)
-
+#define VIDEO_END_FRAME (300000)
 #define LOG_FORMAT_VERSION 1 
 
+#define OUTPUT_FPS
+#define RUN_EMPTY_LOOP 0
 
+#define SKIP_DRAWING 0
 
 struct MOUSE_STATE {
 	int event;
@@ -95,11 +104,14 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 	capf >> frame;
 	return frame;
 }
+
 Point2f  GetUVValue(CReferenceBoard & refBoard,  Point2f pt) {
 	return refBoard.GetUVCoordinate( pt);
 }
 void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
-	
+#if SKIP_DRAWING
+	return;
+#endif // SKIP_DRAWING
 	std::ostringstream uvText;
 	uvText << std::setprecision(2);
 	uvText << uv.x << "," << uv.y;
@@ -107,6 +119,10 @@ void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
 	cv::putText(frame, text, pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
 }
 void DrawStartUV(Mat  frame, Point2f pt) {
+#if SKIP_DRAWING
+	return;
+#endif // SKIP_DRAWING
+
 	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS, 40);
 }
 
@@ -129,14 +145,13 @@ void GetExpectedPositionFromMeanValue(std::list<cv::Point2f> &uvHistory, CRefere
 }
 
 
-
 void SaveLog( std::string path, list<LOG_INFO> & logList) {
 	std::ofstream o(path, std::ofstream::trunc);
 	o << std::setprecision(6);
 
 #if LOG_FORMAT_VERSION==1
 	// output header
-	o << "u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+	o << "frame_id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
 	for (auto it = logList.begin(); it != logList.end(); it++) {
 		int id = it->frameID;
@@ -145,6 +160,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
 		if (isnan(uv.x))
 			continue;
+		o << id << " , ";
 		o << uv.x << " , " << uv.y << " , ";
 		o << realPositionInPixel.x << " , " << realPositionInPixel.y << " , ";
 		o << expectedPositionInPixel.x << " , " << expectedPositionInPixel.y;
@@ -154,10 +170,9 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 #if LOG_FORMAT_VERSION==2
 	// output header
-	o << "id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
+	o << "frame_id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
 	for (auto it = logList.begin(); it != logList.end(); it++) {
-		int id = it->frameID;
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;
@@ -171,6 +186,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 	o.close();
 }
+
 
 void PushLogEmpty(list<LOG_INFO> & logList, int frameID) {
 	LOG_INFO log;
@@ -202,19 +218,19 @@ int main(int argc, char** argv) {
 
 	std::list<LOG_INFO> reportLogList;
 	std::list<cv::Point2f> uvHistoryList;
-
+	MarkerDetectInROI *mdROI = new MarkerDetectInROI;
 
 	CReferenceBoard renderenceBoard;
 
+  VideoCapture cap;
   std::string videoFile = VIDEO_FILE;
   if (argc>1) {
     videoFile = argv[1];
+    cap = VideoCapture(videoFile);
+    cout << "Read video: " << videoFile << endl;
+  } else {
+    cap = VideoCapture(1);
   }
-
-  cout << "Read video: " << videoFile << endl;
-
-  VideoCapture cap(videoFile);
-	//frame = GetVideoFrame(cap, frameControlFlag);
 	
 	cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
 	frameControlFlag = FRAME_PLAY;
@@ -230,6 +246,7 @@ int main(int argc, char** argv) {
 	std::shared_ptr<cv::SimpleBlobDetector::Params> blobparams(new cv::SimpleBlobDetector::Params);
 	
 	InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
+	mdROI->InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
 	blobConfigBar.open(blobparams,"bigmarker");
 
 
@@ -242,83 +259,101 @@ int main(int argc, char** argv) {
 		mouse_state.flags = flags;
 	});
 	bool needQuit = false;
+	std::clock_t lastTime = clock();
 	
 	while (!needQuit) {
+
+		std::clock_t currentTime = clock();
+#ifdef OUTPUT_FPS
+		cout << "FPS is:" << CLOCKS_PER_SEC/ (double)(currentTime - lastTime) << endl;		
+#endif // OUTPUT_FPS
+		lastTime = currentTime;
 
 		
 		frame = GetVideoFrame(cap, frameControlFlag);
 		controlbar.UpdateStatus(cap);	
 
 
+		if (controlbar.position > VIDEO_END_FRAME) {
+			cout << "reach to max frame" << endl;
+			break;
+		}
 		if (frame.empty()) {
 			
 			cout << "frame empty"<<endl;
 			break;
 		}
+#if RUN_EMPTY_LOOP
+		imshow("Frame", frame);
+		continue;
+#endif // RUN_EMPTY_LOOP
+
+		
 			
 		vector<KeyPoint> corners;
 		
 		
 		bool isFoundFlag =false;
-		isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
+		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
+		int roiSize = 80;
+		int marginSize = 20;
+		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
 
 
-		if (corners.size() == 4) {
-			vector<int> hullID;
-			vector<Point2f> pt;
-			KeyPoint::convert(corners, pt);
-			convexHull(pt, hullID, false, false);
-			if (hullID.size() == 4) {
-				putText(frame, "1", pt[hullID[0]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "2", pt[hullID[1]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "3", pt[hullID[2]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "4", pt[hullID[3]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				circle(frame, Point2f(corners[0].pt.x, corners[0].pt.y), 3, Scalar(255, 0, 0), 3);
-				circle(frame, Point2f(corners[1].pt.x, corners[1].pt.y), 3, Scalar(255, 0, 0), 3);
-				circle(frame, Point2f(corners[2].pt.x, corners[2].pt.y), 3, Scalar(255, 0, 0), 3);
-				circle(frame, Point2f(corners[3].pt.x, corners[3].pt.y), 3, Scalar(255, 0, 0), 3);
+		if (mdROI->cornerNum == 4) {
+#if SKIP_DRAWING
+#else
+			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+#endif // SKIP_DRAWING
 
 				
-				if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
-					vector<Point2f> inputArray = { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] };
-					renderenceBoard.UpdateCurrentTransform(inputArray);
-					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x,(float) mouse_state.y));
-					DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
-				}
+			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
+			renderenceBoard.UpdateCurrentTransform(inputArray);
+			Point2f expectedPosition(0, 0);
+			GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard, expectedPosition);
 				
-			}
-			PushLogEmpty(reportLogList, controlbar.position);
-		}		
-		else if (corners.size() == 5) {
-			vector<int> hullID;
-			vector<Point2f> pt;
-			KeyPoint::convert(corners, pt);
-			convexHull(pt, hullID, false, false);
-			//cout << "hull: " << hullID.size() << endl;
-
-			if (hullID.size() == 4) {
-				putText(frame, "1", pt[hullID[0]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "2", pt[hullID[1]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "3", pt[hullID[2]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				putText(frame, "4", pt[hullID[3]], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-				int centerID = 10 - hullID[0] - hullID[1]- hullID[2]- hullID[3];
-				circle(frame, pt[hullID[0]], 3, Scalar(255, 0, 0), 3);
-				circle(frame, pt[hullID[1]], 3, Scalar(255, 0, 0), 3);
-				circle(frame, pt[hullID[2]], 3, Scalar(255, 0, 0), 3);
-				circle(frame, pt[hullID[3]], 3, Scalar(255, 0, 0), 3);
-				circle(frame, pt[centerID], 3, Scalar(0, 0, 255), 3);
-
-
-				vector<Point2f> inputArray = { pt[hullID[1]], pt[hullID[0]], pt[hullID[3]], pt[hullID[2]] };
+			if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
+				vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 				renderenceBoard.UpdateCurrentTransform(inputArray);
-				Point2f uv = renderenceBoard.GetUVCoordinate(pt[centerID]);
+				Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x,(float) mouse_state.y));
+				DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
+			}
+			PushLog(reportLogList, controlbar.position, expectedPosition);
+		}		
+		else if (mdROI->cornerNum == 5) {
+#if SKIP_DRAWING
+#else
+			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+			circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+			circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
+#endif // SKIP_DRAWING
+
+
+				vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
+				renderenceBoard.UpdateCurrentTransform(inputArray);
+
+				Point2f uv = renderenceBoard.GetUVCoordinate(mdROI->corners[4]);
 				uvHistoryList.push_back(uv);
 				Point2f expectedPosition(0,0);
 				GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard,  expectedPosition);
-				Point2f centerPt(pt[centerID]);
-				PushLog(reportLogList,controlbar.position,uv, centerPt, expectedPosition);
+				Point2f centerPt(mdROI->corners[4]);
 
 				DrawUVValue(frame, uv, centerPt);
+				PushLog(reportLogList, controlbar.position,uv, centerPt, expectedPosition);
+
 				if (mouse_state.flags && EVENT_FLAG_LBUTTON) 
 				{
 					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x, (float)mouse_state.y));
@@ -326,18 +361,25 @@ int main(int argc, char** argv) {
 				}
 				
 				DrawStartUV(frame , expectedPosition);
-			}
-			else {
-				cout << "..." << endl;
-			}
+		}
+		else {
+			cout << "..." << endl;
+			PushLogEmpty(reportLogList, controlbar.position);
+		}
 
-		}
-		else
-		{
-			//PushLog(reportLogList,controlbar.position);
-		}
+		
 		imshow("Frame", frame);
+
+		bool needQuit = false;
 		ProcessMainLoopKeyEvent(needQuit, frameControlFlag);
+		if (needQuit) 
+			break;
+#ifdef OUTPUT_FPS
+		std::clock_t finishTime = clock();
+		cout << " The run time is:" << (double)( finishTime - currentTime ) / CLOCKS_PER_SEC *1000 << "ms" << endl;
+#endif // OUTPUT_FPS
+		
+		
 	}
 
 	// When everything done, release the video capture object
@@ -349,6 +391,8 @@ int main(int argc, char** argv) {
 
 	SaveLog(UVLOG_FILE,reportLogList);
 
+	delete mdROI;
+	//system("pause");
 	return 0;
 }
 

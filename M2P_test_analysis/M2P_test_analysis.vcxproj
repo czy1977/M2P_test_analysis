@@ -134,6 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,24 +156,29 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opencv_world341.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CBlobDetectorController.h" />
+    <ClInclude Include="COpenCVShowManyImages.h" />
     <ClInclude Include="COpenCVVideoControlBar.h" />
     <ClInclude Include="CReferenceBoard.h" />
     <ClInclude Include="M2P_test_analysis.h" />
     <ClInclude Include="markerDetect.h" />
+    <ClInclude Include="MarkerDetectInROI.h" />
     <ClInclude Include="OCVInterface.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CBlobDetectorController.cpp" />
+    <ClCompile Include="COpenCVShowManyImages.cpp" />
     <ClCompile Include="COpenCVVideoControlBar.cpp" />
     <ClCompile Include="CReferenceBoard.cpp" />
     <ClCompile Include="M2P_test_analysis.cpp" />
     <ClCompile Include="markerDetect.cpp" />
+    <ClCompile Include="MarkerDetectInROI.cpp" />
     <ClCompile Include="OCVInterface.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

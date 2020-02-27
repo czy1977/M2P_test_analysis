@@ -13,4 +13,4 @@ file(GLOB_RECURSE SRCS M2P_test_analysis/*.cpp M2P_test_analysis/*.c)
 
 add_executable(m2p_test ${SRCS})
 
-target_link_libraries(m2p_test ${OpenCV_LIBS} )
+target_link_libraries(m2p_test ${OpenCV_LIBS} -lpthread)
