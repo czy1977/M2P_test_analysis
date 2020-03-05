@@ -36,8 +36,8 @@ float minCircularity = 0.7f;
 //#define VIDEO_FILE ("C0001-converted.mp4")
 //#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("video/C0017.mp4")
-#define UVLOG_FILE ("M2P_test_analysis_python/logs/log_temp.csv")
+#define VIDEO_FILE ("video/C0008-converted.mp4")
+#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
 
 
 #define VIDEO_START_FRAME (200)
@@ -179,6 +179,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 
 void PushLogEmpty(list<LOG_INFO> & logList, int frameID) {
+	return;
 	LOG_INFO log;
 	log.frameID = frameID;
 	log.uv.x= log.uv.y= NAN;
@@ -203,15 +204,18 @@ void PushLog(list<LOG_INFO> & logList, int frameID,const cv::Point2f & uv, const
 	logList.push_back(log);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 	Mat frame;
 	list<LOG_INFO> reportLogList;
 	std::list<cv::Point2f> uvHistoryList;
 	MarkerDetectInROI *mdROI = new MarkerDetectInROI;
 
 	CReferenceBoard renderenceBoard;
+	std::string videoFile = VIDEO_FILE;
+	std::string logFile = UVLOG_FILE;
 
-	VideoCapture cap(VIDEO_FILE);
+
+	VideoCapture cap(videoFile);
 	
 	cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
 	frameControlFlag = FRAME_PLAY;
@@ -344,7 +348,7 @@ int main() {
 				DrawStartUV(frame , expectedPosition);
 		}
 		else {
-			cout << "..." << endl;
+			//cout << "..." << endl;
 			PushLogEmpty(reportLogList, controlbar.position);
 		}
 
@@ -370,7 +374,7 @@ int main() {
 	destroyAllWindows();
 
 
-	SaveLog(UVLOG_FILE,reportLogList);
+	SaveLog(logFile,reportLogList);
 
 	delete mdROI;
 	//system("pause");
