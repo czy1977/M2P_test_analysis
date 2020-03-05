@@ -13,6 +13,7 @@
 #include "CReferenceBoard.h"
 #include "M2P_test_analysis.h"
 #include "MarkerDetectInROI.h"
+#include "cmdline/cmdline.h"
 
 
 #define MAIN_WINDOW_NAME "Frame"
@@ -36,8 +37,11 @@ float minCircularity = 0.7f;
 //#define VIDEO_FILE ("C0001-converted.mp4")
 //#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("video/C0008-converted.mp4")
-#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
+//#define VIDEO_FILE ("video/C0008-converted.mp4")
+//#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
+
+#define VIDEO_FILE "video/video.mp4"
+#define UVLOG_FILE "logs/log.csv"
 
 
 #define VIDEO_START_FRAME (200)
@@ -203,6 +207,19 @@ void PushLog(list<LOG_INFO> & logList, int frameID,const cv::Point2f & uv, const
 	log.expectedPositionInPixel = expectedPosition;
 	logList.push_back(log);
 }
+void initArgParser(int argc, char *argv[], cmdline::parser & parser) {
+  // add specified type of variable.
+  // 1st argument is long name
+  // 2nd argument is short name (no short name if '\0' specified)
+  // 3rd argument is description
+  // 4th argument is mandatory (optional. default is false)
+  // 5th argument is default value  (optional. it used when mandatory is false)
+	parser.add<std::string>("video", 'v', "video file path", true, VIDEO_FILE);
+	parser.add<std::string>("log", 'l', "output log file path", true, UVLOG_FILE);
+
+	parser.set_program_name("M2P_test_analysis");
+	parser.parse_check(argc, argv);
+}
 
 int main(int argc, char *argv[]) {
 	Mat frame;
@@ -211,8 +228,16 @@ int main(int argc, char *argv[]) {
 	MarkerDetectInROI *mdROI = new MarkerDetectInROI;
 
 	CReferenceBoard renderenceBoard;
-	std::string videoFile = VIDEO_FILE;
-	std::string logFile = UVLOG_FILE;
+
+
+
+	// parse cmd line argument
+	cmdline::parser cmdParser;
+	initArgParser(argc, argv, cmdParser);
+	std::string videoFile;	
+	std::string logFile;
+	videoFile = cmdParser.get<string>("video");
+	logFile = cmdParser.get<string>("log");
 
 
 	VideoCapture cap(videoFile);
