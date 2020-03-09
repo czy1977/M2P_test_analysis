@@ -5,8 +5,8 @@
 //#define DEBUG
 //#define SHOW_DEBUG_IMAGE
 
-#define RUN_MULTI_THREAD 0
-#define DEBUG_ROI
+#define RUN_MULTI_THREAD 1
+//#define DEBUG_ROI
 
 MarkerDetectInROI::MarkerDetectInROI()
 {
@@ -176,8 +176,8 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {
 
-		pt[0].x = corners[i].x + pt[0].x - roiSize / 2;
-		pt[0].y = corners[i].y + pt[0].y - roiSize / 2;
+		pt[0].x = (int)(corners[i].x) + pt[0].x - roiSize / 2;
+		pt[0].y = (int)(corners[i].y) + pt[0].y - roiSize / 2;
 		candidatePts[i] = pt[0];
 		foundMark[i] = true;
 #ifdef DEBUG_ROI
@@ -269,7 +269,7 @@ bool MarkerDetectInROI::IsRec(vector<Point2f> &orderedCorners, float thd) {
 }
 
 void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
-	ROI = src(cv::Rect(pt.x - roiSize / 2, pt.y - roiSize / 2, roiSize, roiSize));
+	ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
 }
 
 bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector::Params> params,

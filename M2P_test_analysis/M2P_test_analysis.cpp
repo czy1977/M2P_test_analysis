@@ -32,7 +32,8 @@ using namespace cv;
 float maxBlobSize = 5000;
 float minBlobSize = 200;
 float minCircularity = 0.7f;
-
+int roiSize = 80;
+int marginSize = 20;
 
 //#define VIDEO_FILE ("C0001-converted.mp4")
 //#define UVLOG_FILE ("log1.csv")
@@ -65,7 +66,7 @@ struct MOUSE_STATE {
 
 void initWindow() {
 	cv::namedWindow(MAIN_WINDOW_NAME, cv::WINDOW_NORMAL);
-	//cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
+	cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
 }
 
 
@@ -304,9 +305,8 @@ int main(int argc, char *argv[]) {
 		
 		
 		bool isFoundFlag =false;
-		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
-		int roiSize = 80;
-		int marginSize = 20;
+
+
 		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
 
 
