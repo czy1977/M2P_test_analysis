@@ -65,7 +65,7 @@ struct MOUSE_STATE {
 
 void initWindow() {
 	cv::namedWindow(MAIN_WINDOW_NAME, cv::WINDOW_NORMAL);
-	cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
+	//cv::resizeWindow(MAIN_WINDOW_NAME, 960, 540);
 }
 
 

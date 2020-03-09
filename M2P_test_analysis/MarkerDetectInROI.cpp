@@ -5,7 +5,8 @@
 //#define DEBUG
 //#define SHOW_DEBUG_IMAGE
 
-#define RUN_MULTI_THREAD 1
+#define RUN_MULTI_THREAD 0
+#define DEBUG_ROI
 
 MarkerDetectInROI::MarkerDetectInROI()
 {
@@ -133,7 +134,7 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	}
 #else
 	for (int i = 0; i < 4; i++) {
-		DecetROI(invImg,corners, i, roiSize, *params1, candidatePts, foundMarkFlags);
+		DecetROI(src,corners, i, roiSize, *params1, candidatePts, foundMarkFlags);
 	}
 #endif // RUN_MULTI_THREAD
 
@@ -174,10 +175,15 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	detector->detect(tempMat, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {
+
 		pt[0].x = corners[i].x + pt[0].x - roiSize / 2;
 		pt[0].y = corners[i].y + pt[0].y - roiSize / 2;
 		candidatePts[i] = pt[0];
 		foundMark[i] = true;
+#ifdef DEBUG_ROI
+		cout << i << " roi center:" << corners[i].x << ", " << corners[i].y << endl;
+		cout << i << " point:" << pt[0].x << ", " << pt[0].y << endl;
+#endif
 	}
 	else {
 		foundMark[i] = false;
