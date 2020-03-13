@@ -29,9 +29,17 @@
 using namespace std;
 using namespace cv;
 
-float maxBlobSize = 5000;
-float minBlobSize = 200;
+float maxBlobSize = 8000;
+float minBlobSize = 1500;
 float minCircularity = 0.7f;
+
+float maxVirtualBlobSize = 5000;
+float minVirtualBlobSize = 1000;
+float minVirtualCircularity = 0.5f;
+
+//float maxBlobSize = 5000;
+//float minBlobSize = 200;
+//float minCircularity = 0.7f;
 int roiSize = 80;
 int marginSize = 20;
 
@@ -45,11 +53,11 @@ int marginSize = 20;
 #define UVLOG_FILE "logs/log.csv"
 
 
-#define VIDEO_START_FRAME (200)
+#define VIDEO_START_FRAME (0)
 #define VIDEO_END_FRAME (300000)
 #define LOG_FORMAT_VERSION 1 
 
-#define OUTPUT_FPS
+//#define OUTPUT_FPS
 #define RUN_EMPTY_LOOP 0
 
 #define SKIP_DRAWING 0
@@ -253,12 +261,20 @@ int main(int argc, char *argv[]) {
 
 	initWindow();
 
-	CBlobDetectorController blobConfigBar;
-	std::shared_ptr<cv::SimpleBlobDetector::Params> blobparams(new cv::SimpleBlobDetector::Params);
+	CBlobDetectorController blobEnvMarkConfigBar,blobVirtualMarkConfigBar;
+	std::shared_ptr<cv::SimpleBlobDetector::Params> EnvMarkBlobParams(new cv::SimpleBlobDetector::Params);
+	std::shared_ptr<cv::SimpleBlobDetector::Params> virtualMarkBlobParams(new cv::SimpleBlobDetector::Params);
+
 	
-	InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
-	mdROI->InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
-	blobConfigBar.open(blobparams,"bigmarker");
+	InitBlobParams(EnvMarkBlobParams, minBlobSize, maxBlobSize, minCircularity);
+
+	InitBlobParams(virtualMarkBlobParams, minVirtualBlobSize, maxVirtualBlobSize, minVirtualCircularity);
+
+	mdROI->InitBlobParams(EnvMarkBlobParams, minBlobSize, maxBlobSize, minCircularity);
+	mdROI->InitBlobParams(virtualMarkBlobParams, minVirtualBlobSize, maxVirtualBlobSize, minVirtualCircularity);
+	blobEnvMarkConfigBar.open(EnvMarkBlobParams,"bigmarker");
+	blobVirtualMarkConfigBar.open(virtualMarkBlobParams, "smallmarker");
+
 
 
 	COpenCVVideoControlBar controlbar(MAIN_WINDOW_NAME);
@@ -307,7 +323,7 @@ int main(int argc, char *argv[]) {
 		bool isFoundFlag =false;
 
 
-		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
+		isFoundFlag = mdROI->FindMarkers(EnvMarkBlobParams, virtualMarkBlobParams, frame, roiSize, marginSize);
 
 
 		if (mdROI->cornerNum == 4) {
@@ -373,7 +389,12 @@ int main(int argc, char *argv[]) {
 				DrawStartUV(frame , expectedPosition);
 		}
 		else {
-			//cout << "..." << endl;
+			cout << "out of mark number ..."<< mdROI->cornerNum << endl;
+			for (int i = 0; i < mdROI->cornerNum; i++) {
+				circle(frame, mdROI->corners[i], 3, Scalar(255, 0, 0), 3);
+			}
+			
+
 			PushLogEmpty(reportLogList, controlbar.position);
 		}
 
