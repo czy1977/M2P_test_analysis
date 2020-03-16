@@ -8,8 +8,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenCV REQUIRED)
 
 include_directories(M2P_test_analysis)
-file(GLOB_RECURSE SRCS M2P_test_analysis/*.cpp M2P_test_analysis/*.c)
+file(GLOB SRCS M2P_test_analysis/*.cpp M2P_test_analysis/*.c)
 
+message(WARNING ${SRCS})
+
+list(REMOVE_ITEM SRCS ${CMAKE_CURRENT_SOURCE_DIR}/cmdline/test.cpp)
+list(REMOVE_ITEM SRCS ${CMAKE_CURRENT_SOURCE_DIR}/cmdline/test2.cpp)
+
+message(WARNING ${SRCS})
 
 add_executable(m2p_test ${SRCS})
 

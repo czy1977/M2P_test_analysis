@@ -13,6 +13,7 @@
 #include "CReferenceBoard.h"
 #include "M2P_test_analysis.h"
 #include "MarkerDetectInROI.h"
+#include "cmdline/cmdline.h"
 
 
 #define MAIN_WINDOW_NAME "Frame"
@@ -38,23 +39,35 @@
 using namespace std;
 using namespace cv;
 
-float maxBlobSize = 5000;
-float minBlobSize = 200;
+float maxBlobSize = 8000;
+float minBlobSize = 1500;
 float minCircularity = 0.7f;
 
+float maxVirtualBlobSize = 5000;
+float minVirtualBlobSize = 1000;
+float minVirtualCircularity = 0.5f;
+
+//float maxBlobSize = 5000;
+//float minBlobSize = 200;
+//float minCircularity = 0.7f;
+int roiSize = 80;
+int marginSize = 20;
 
 //#define VIDEO_FILE ("C0001-converted.mp4")
 //#define UVLOG_FILE ("log1.csv")
 
-#define VIDEO_FILE ("video/C0017.mp4")
-#define UVLOG_FILE ("/home/simeon/dvp/lenovo/build/m2p_test/log_temp.csv")
+//#define VIDEO_FILE ("video/C0008-converted.mp4")
+//#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
+
+#define VIDEO_FILE "video/video.mp4"
+#define UVLOG_FILE "logs/log.csv"
 
 
-#define VIDEO_START_FRAME (200)
+#define VIDEO_START_FRAME (0)
 #define VIDEO_END_FRAME (300000)
 #define LOG_FORMAT_VERSION 1 
 
-#define OUTPUT_FPS
+//#define OUTPUT_FPS
 #define RUN_EMPTY_LOOP 0
 
 #define SKIP_DRAWING 0
@@ -189,6 +202,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 
 
 void PushLogEmpty(list<LOG_INFO> & logList, int frameID) {
+	return;
 	LOG_INFO log;
 	log.frameID = frameID;
 	log.uv.x= log.uv.y= NAN;
@@ -212,25 +226,40 @@ void PushLog(list<LOG_INFO> & logList, int frameID,const cv::Point2f & uv, const
 	log.expectedPositionInPixel = expectedPosition;
 	logList.push_back(log);
 }
+void initArgParser(int argc, char *argv[], cmdline::parser & parser) {
+  // add specified type of variable.
+  // 1st argument is long name
+  // 2nd argument is short name (no short name if '\0' specified)
+  // 3rd argument is description
+  // 4th argument is mandatory (optional. default is false)
+  // 5th argument is default value  (optional. it used when mandatory is false)
+	parser.add<std::string>("video", 'v', "video file path", true, VIDEO_FILE);
+	parser.add<std::string>("log", 'l', "output log file path", true, UVLOG_FILE);
 
-int main(int argc, char** argv) {
+	parser.set_program_name("M2P_test_analysis");
+	parser.parse_check(argc, argv);
+}
+
+int main(int argc, char *argv[]) {
 	Mat frame;
-
 	std::list<LOG_INFO> reportLogList;
 	std::list<cv::Point2f> uvHistoryList;
 	MarkerDetectInROI *mdROI = new MarkerDetectInROI;
 
 	CReferenceBoard renderenceBoard;
 
-  VideoCapture cap;
-  std::string videoFile = VIDEO_FILE;
-  if (argc>1) {
-    videoFile = argv[1];
-    cap = VideoCapture(videoFile);
-    cout << "Read video: " << videoFile << endl;
-  } else {
-    cap = VideoCapture(1);
-  }
+
+
+	// parse cmd line argument
+	cmdline::parser cmdParser;
+	initArgParser(argc, argv, cmdParser);
+	std::string videoFile;	
+	std::string logFile;
+	videoFile = cmdParser.get<string>("video");
+	logFile = cmdParser.get<string>("log");
+
+
+	cv::VideoCapture cap(videoFile);
 	
 	cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
 	frameControlFlag = FRAME_PLAY;
@@ -242,12 +271,20 @@ int main(int argc, char** argv) {
 
 	initWindow();
 
-	CBlobDetectorController blobConfigBar;
-	std::shared_ptr<cv::SimpleBlobDetector::Params> blobparams(new cv::SimpleBlobDetector::Params);
+	CBlobDetectorController blobEnvMarkConfigBar,blobVirtualMarkConfigBar;
+	std::shared_ptr<cv::SimpleBlobDetector::Params> EnvMarkBlobParams(new cv::SimpleBlobDetector::Params);
+	std::shared_ptr<cv::SimpleBlobDetector::Params> virtualMarkBlobParams(new cv::SimpleBlobDetector::Params);
 	
-	InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
-	mdROI->InitBlobParams(blobparams, minBlobSize, maxBlobSize, minCircularity);
-	blobConfigBar.open(blobparams,"bigmarker");
+	
+	InitBlobParams(EnvMarkBlobParams, minBlobSize, maxBlobSize, minCircularity);
+
+	InitBlobParams(virtualMarkBlobParams, minVirtualBlobSize, maxVirtualBlobSize, minVirtualCircularity);
+
+	mdROI->InitBlobParams(EnvMarkBlobParams, minBlobSize, maxBlobSize, minCircularity);
+	mdROI->InitBlobParams(virtualMarkBlobParams, minVirtualBlobSize, maxVirtualBlobSize, minVirtualCircularity);
+	blobEnvMarkConfigBar.open(EnvMarkBlobParams,"bigmarker");
+	blobVirtualMarkConfigBar.open(virtualMarkBlobParams, "smallmarker");
+
 
 
 	COpenCVVideoControlBar controlbar(MAIN_WINDOW_NAME);
@@ -260,7 +297,7 @@ int main(int argc, char** argv) {
 	});
 	bool needQuit = false;
 	std::clock_t lastTime = clock();
-	
+
 	while (!needQuit) {
 
 		std::clock_t currentTime = clock();
@@ -269,11 +306,11 @@ int main(int argc, char** argv) {
 #endif // OUTPUT_FPS
 		lastTime = currentTime;
 
-		
+
 		frame = GetVideoFrame(cap, frameControlFlag);
 		controlbar.UpdateStatus(cap);	
 
-
+	
 		if (controlbar.position > VIDEO_END_FRAME) {
 			cout << "reach to max frame" << endl;
 			break;
@@ -289,15 +326,14 @@ int main(int argc, char** argv) {
 #endif // RUN_EMPTY_LOOP
 
 		
-			
+		
 		vector<KeyPoint> corners;
 		
 		
 		bool isFoundFlag =false;
-		//isFoundFlag = FindWhiteInBlackCircleGrid(blobparams, frame, corners);
-		int roiSize = 80;
-		int marginSize = 20;
-		isFoundFlag = mdROI->FindMarkers(blobparams, blobparams, frame, roiSize, marginSize);
+
+
+		isFoundFlag = mdROI->FindMarkers(EnvMarkBlobParams, virtualMarkBlobParams, frame, roiSize, marginSize);
 
 
 		if (mdROI->cornerNum == 4) {
@@ -313,18 +349,18 @@ int main(int argc, char** argv) {
 			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
 #endif // SKIP_DRAWING
 
-				
+
 			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 			renderenceBoard.UpdateCurrentTransform(inputArray);
 			Point2f expectedPosition(0, 0);
 			GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard, expectedPosition);
-				
+			
 			if (mouse_state.flags && EVENT_FLAG_LBUTTON) {
 				vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 				renderenceBoard.UpdateCurrentTransform(inputArray);
 				Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x,(float) mouse_state.y));
 				DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
-			}
+			}				
 			PushLog(reportLogList, controlbar.position, expectedPosition);
 		}		
 		else if (mdROI->cornerNum == 5) {
@@ -359,11 +395,16 @@ int main(int argc, char** argv) {
 					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x, (float)mouse_state.y));
 					DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
 				}
-				
+			
 				DrawStartUV(frame , expectedPosition);
 		}
 		else {
-			cout << "..." << endl;
+			cout << "out of mark number ..."<< mdROI->cornerNum << endl;
+			for (int i = 0; i < mdROI->cornerNum; i++) {
+				circle(frame, mdROI->corners[i], 3, Scalar(255, 0, 0), 3);
+			}
+			
+
 			PushLogEmpty(reportLogList, controlbar.position);
 		}
 
@@ -389,7 +430,7 @@ int main(int argc, char** argv) {
 	destroyAllWindows();
 
 
-	SaveLog(UVLOG_FILE,reportLogList);
+	SaveLog(logFile,reportLogList);
 
 	delete mdROI;
 	//system("pause");
