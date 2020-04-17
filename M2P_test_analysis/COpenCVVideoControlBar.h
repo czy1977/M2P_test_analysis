@@ -10,12 +10,16 @@ private:
 	void dirty();
 
 public:
-	int position;
+  double position; // position (in ms) in the video
 	int count;
 	COpenCVVideoControlBar(std::string masterWindowName);
 	virtual ~COpenCVVideoControlBar();
 
 	void UpdateStatus(cv::VideoCapture & cap);
+
+  void UpdateStatus(std::vector<std::string>& imageList, long& imageIndex);
+
+  void UpdateStatus(std::map<double,std::string> const& imageList, std::map<double,std::string>::const_iterator& imageIndex);
 
 };
 

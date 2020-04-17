@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)
 
+find_package(Boost REQUIRED COMPONENTS system filesystem )
+
 include_directories(M2P_test_analysis)
 file(GLOB SRCS M2P_test_analysis/*.cpp M2P_test_analysis/*.c)
 
@@ -19,4 +21,4 @@ message(WARNING ${SRCS})
 
 add_executable(m2p_test ${SRCS})
 
-target_link_libraries(m2p_test ${OpenCV_LIBS} -lpthread)
+target_link_libraries(m2p_test ${OpenCV_LIBS} -lpthread  -lboost_filesystem -lboost_system)

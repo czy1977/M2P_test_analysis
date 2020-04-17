@@ -15,7 +15,8 @@ COpenCVVideoControlBar::COpenCVVideoControlBar(std::string masterWindowName):
 	count(0),
 	needUpdate(false)
 {
-	cv::createTrackbar(TRACKBAR_NAME, masterWindowName, &position, 100, [](int pos, void* pdata)-> void {
+  static int tmp;
+  cv::createTrackbar(TRACKBAR_NAME, masterWindowName, &tmp, 100, [](int pos, void* pdata)-> void {
 		COpenCVVideoControlBar * pInstance = static_cast <COpenCVVideoControlBar*>(pdata);
 		if (NULL != pInstance)
 		{
@@ -39,14 +40,14 @@ COpenCVVideoControlBar::~COpenCVVideoControlBar()
 void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 {
 	if (needUpdate) {
-		cap.set(CV_CAP_PROP_POS_FRAMES,(double)position);	
+    cap.set(CV_CAP_PROP_POS_FRAMES,position);
 		needUpdate = false;
 	}
 	else if(firstInit)
 	{
 
-		count = (int)cap.get(CV_CAP_PROP_FRAME_COUNT);
-		position = (int)cap.get(CV_CAP_PROP_POS_FRAMES);
+    count = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    position = cap.get(CV_CAP_PROP_POS_FRAMES);
 		updating = true;
 		cv::setTrackbarMax(TRACKBAR_NAME, windowName, count);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
@@ -56,8 +57,34 @@ void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 	else
 	{
 		updating = true;
-		position = (int)cap.get(CV_CAP_PROP_POS_FRAMES);
+    position = cap.get(CV_CAP_PROP_POS_FRAMES);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
 	}
 
+}
+
+void COpenCVVideoControlBar::UpdateStatus(std::map<double,std::string> const& imageList, std::map<double,std::string>::const_iterator& imageIndex)
+{
+  if (imageIndex == imageList.end())
+    return;
+
+  if (needUpdate) {
+    imageIndex = imageList.lower_bound(position);
+    needUpdate = false;
+  }
+  else if(firstInit)
+  {
+    count = imageList.rbegin()->first+1;
+    position = imageIndex->first;
+    updating = true;
+    cv::setTrackbarMax(TRACKBAR_NAME, windowName, count);
+    cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
+    firstInit = false;
+  }
+  else
+  {
+    updating = true;
+    position = imageIndex->first;
+    cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
+  }
 }

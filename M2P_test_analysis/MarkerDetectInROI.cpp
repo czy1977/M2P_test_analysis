@@ -16,16 +16,16 @@ MarkerDetectInROI::MarkerDetectInROI()
 void MarkerDetectInROI::InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params,
 	float minSize, float maxSize, float minCircularity)
 {
-	params->minArea = minSize;
-	params->maxArea = maxSize;
+  params->minArea = minSize;
+  params->maxArea = maxSize;
 	params->filterByArea = true;
 	params->filterByCircularity = true;
 	params->minCircularity = minCircularity;
 	params->filterByInertia = false;
 	params->filterByConvexity = false;
-	params->minDistBetweenBlobs = 20;
-	params->maxThreshold = 255;
-	params->minThreshold = 50;
+  params->minDistBetweenBlobs = 20;
+  params->maxThreshold = 255;
+  params->minThreshold = 50;
 }
 
 bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDetector::Params> params,
@@ -40,7 +40,7 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 	Mat invImg = 255 * Mat::ones(gray.size(), CV_8U);
 	invImg = invImg - gray;
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
-	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params);
+  Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params);
 	// std::vector<KeyPoint> corners;
 	detector->detect(invImg, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
@@ -280,7 +280,7 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params);
 	//float thd = 100;
-	int p1y = max(pts[0].y+thd,pts[1].y+thd);
+  int p1y = max(pts[0].y+thd, pts[1].y+thd);
 	int p1x = max(pts[1].x+thd, pts[2].x+thd);
 	int p2y = min(pts[2].y-thd, pts[3].y-thd);
 	int p2x = min(pts[0].x-thd, pts[3].x-thd);
@@ -289,6 +289,7 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	Mat ROI = 255 - gray;;
 	detector->detect(ROI, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
+
 	if (pt.size() == 1) {
 		pt[0].x = pt[0].x + p1x;
 		pt[0].y = pt[0].y + p1y;

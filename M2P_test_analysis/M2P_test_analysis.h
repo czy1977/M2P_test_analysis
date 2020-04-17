@@ -12,7 +12,7 @@ enum FRAME_CONTROL {
 };
 
 typedef struct {
-	int frameID;
+  double frameID;
 	cv::Point2f uv;
 	cv::Point2f realPositionInPixel;
 	cv::Point2f expectedPositionInPixel;
