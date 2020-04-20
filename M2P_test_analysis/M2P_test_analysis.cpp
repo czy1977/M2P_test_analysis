@@ -256,7 +256,7 @@ void SaveLog( std::string path, list<LOG_INFO> & logList) {
 	o << "frame_id,u,v,real_x,real_y,expected_x,expected_y" << std::endl;
 
 	for (auto it = logList.begin(); it != logList.end(); it++) {
-		int id = it->frameID;
+    double id = it->frameID;
 		Point2f uv = it->uv;
 		cv::Point2f realPositionInPixel = it->realPositionInPixel;
 		cv::Point2f expectedPositionInPixel = it->expectedPositionInPixel;

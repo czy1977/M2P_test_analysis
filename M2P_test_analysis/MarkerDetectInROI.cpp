@@ -269,7 +269,11 @@ bool MarkerDetectInROI::IsRec(vector<Point2f> &orderedCorners, float thd) {
 }
 
 void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
-	ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
+	auto s = roiSize/2;
+	cv::Range cols(std::max(0, (int)(pt.x - s)), std::min(src.rows, (int)(pt.x + s + 1)));
+	cv::Range rows(std::max(0, (int)(pt.y - s)), std::min(src.cols, (int)(pt.y + s + 1)));
+	ROI = src(rows, cols);
+//  ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
 }
 
 bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector::Params> params,
