@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MarkerDetectInROI.h"
-#include "COpenCVShowManyImages.h"
+
 #include <thread>
 //#define DEBUG
 //#define SHOW_DEBUG_IMAGE
