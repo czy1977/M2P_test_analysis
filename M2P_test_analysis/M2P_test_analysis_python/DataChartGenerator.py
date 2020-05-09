@@ -31,13 +31,6 @@ def main(arg):
     prefix = args.directory
     prefix +='/'
 
-    # the file number in the
-    #file_index_begin = 1
-    #file_index_end = 20
-
-    # filenameTemplate = 'log_c{0:0>4d}.csv'
-    #filename_template = 'log_{0:0>2d}.csv'
-    #filenames = [filename_template.format(s) for s in range(file_index_begin, file_index_end + 1)]
 
     try:
         listfiles = get_filenames(prefix)
@@ -51,7 +44,7 @@ def main(arg):
 
 
     min_time_offset = -10
-    max_time_offset = 25
+    max_time_offset = 35
     max_iteration = max_time_offset - min_time_offset
 
     for filename in filenames:
