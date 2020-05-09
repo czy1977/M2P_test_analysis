@@ -30,9 +30,6 @@
     <ClInclude Include="COpenCVVideoControlBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CBlobDetectorController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CReferenceBoard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -43,6 +40,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="COpenCVShowManyImages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CBlobDetectorControllerCVUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -62,9 +62,6 @@
     <ClCompile Include="COpenCVVideoControlBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CBlobDetectorController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CReferenceBoard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -72,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="COpenCVShowManyImages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CBlobDetectorControllerCVUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -8,7 +8,7 @@
 #include <iostream>
 #include "markerDetect.h"
 #include "OCVInterface.h"
-#include "CBlobDetectorController.h"
+#include "CBlobDetectorControllerCVUI.h"
 #include "COpenCVVideoControlBar.h"
 #include "CReferenceBoard.h"
 #include "M2P_test_analysis.h"
@@ -31,7 +31,8 @@ using namespace cv;
 
 float maxBlobSize = 8000;
 float minBlobSize = 1500;
-float minCircularity = 0.7f;
+//float minCircularity = 0.7f;
+float minCircularity = 0.77f;
 
 float maxVirtualBlobSize = 5000;
 float minVirtualBlobSize = 1000;
@@ -43,11 +44,6 @@ float minVirtualCircularity = 0.5f;
 int roiSize = 80;
 int marginSize = 20;
 
-//#define VIDEO_FILE ("C0001-converted.mp4")
-//#define UVLOG_FILE ("log1.csv")
-
-//#define VIDEO_FILE ("video/C0008-converted.mp4")
-//#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
 
 #define VIDEO_FILE "video/video.mp4"
 #define UVLOG_FILE "logs/log.csv"
@@ -61,6 +57,9 @@ int marginSize = 20;
 #define RUN_EMPTY_LOOP 0
 
 #define SKIP_DRAWING 0
+
+#define MULTI_THREAD_DECODE 1
+
 
 struct MOUSE_STATE {
 	int event;
@@ -261,7 +260,8 @@ int main(int argc, char *argv[]) {
 
 	initWindow();
 
-	CBlobDetectorController blobEnvMarkConfigBar,blobVirtualMarkConfigBar;
+	CBlobDetectorControllerCVUI blobEnvMarkConfigBar;
+	CBlobDetectorControllerCVUI blobVirtualMarkConfigBar;
 	std::shared_ptr<cv::SimpleBlobDetector::Params> EnvMarkBlobParams(new cv::SimpleBlobDetector::Params);
 	std::shared_ptr<cv::SimpleBlobDetector::Params> virtualMarkBlobParams(new cv::SimpleBlobDetector::Params);
 
@@ -272,8 +272,9 @@ int main(int argc, char *argv[]) {
 
 	mdROI->InitBlobParams(EnvMarkBlobParams, minBlobSize, maxBlobSize, minCircularity);
 	mdROI->InitBlobParams(virtualMarkBlobParams, minVirtualBlobSize, maxVirtualBlobSize, minVirtualCircularity);
-	blobEnvMarkConfigBar.open(EnvMarkBlobParams,"bigmarker");
-	blobVirtualMarkConfigBar.open(virtualMarkBlobParams, "smallmarker");
+
+	blobEnvMarkConfigBar.open(EnvMarkBlobParams,"big_mark");
+	blobVirtualMarkConfigBar.open(virtualMarkBlobParams, "small_mark");
 
 
 
@@ -290,6 +291,8 @@ int main(int argc, char *argv[]) {
 
 	while (!needQuit) {
 
+		blobEnvMarkConfigBar.loop();
+		blobVirtualMarkConfigBar.loop();
 		std::clock_t currentTime = clock();
 #ifdef OUTPUT_FPS
 		cout << "FPS is:" << CLOCKS_PER_SEC/ (double)(currentTime - lastTime) << endl;		

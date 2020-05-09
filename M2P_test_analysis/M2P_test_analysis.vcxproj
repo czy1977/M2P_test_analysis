@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\dev\ORB_slam\opencv341\build\include\opencv2;D:\dev\ORB_slam\opencv341\build\include\opencv;D:\dev\ORB_slam\opencv341\build\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\dev\ORB_slam\opencv341\build\include\opencv2;D:\dev\ORB_slam\opencv341\build\include\opencv;D:\dev\ORB_slam\opencv341\build\include;D:\dev\test tools project\M2P_test_analysis\M2P_test_analysis\thirdparty\cvui-2.7.0;$(IncludePath)</IncludePath>
     <LibraryPath>D:\dev\ORB_slam\opencv341\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -84,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>D:\dev\ORB_slam\opencv341\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\dev\ORB_slam\opencv341\build\include\opencv2;D:\dev\ORB_slam\opencv341\build\include\opencv;D:\dev\ORB_slam\opencv341\build\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\dev\ORB_slam\opencv341\build\include\opencv2;D:\dev\ORB_slam\opencv341\build\include\opencv;D:\dev\ORB_slam\opencv341\build\include;D:\dev\test tools project\M2P_test_analysis\M2P_test_analysis\thirdparty\cvui-2.7.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -160,7 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CBlobDetectorController.h" />
+    <ClInclude Include="CBlobDetectorControllerCVUI.h" />
     <ClInclude Include="COpenCVShowManyImages.h" />
     <ClInclude Include="COpenCVVideoControlBar.h" />
     <ClInclude Include="CReferenceBoard.h" />
@@ -172,7 +172,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CBlobDetectorController.cpp" />
+    <ClCompile Include="CBlobDetectorControllerCVUI.cpp" />
     <ClCompile Include="COpenCVShowManyImages.cpp" />
     <ClCompile Include="COpenCVVideoControlBar.cpp" />
     <ClCompile Include="CReferenceBoard.cpp" />

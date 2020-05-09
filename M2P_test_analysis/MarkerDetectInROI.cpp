@@ -82,7 +82,12 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 		convexHull(pt, hullID, false, false);
 		if (hullID.size() == 4) {
 			vector<Point2f> orderedPt;
-			OrderCorners(pt, orderedPt);
+			vector<Point2f> tempPt;
+			tempPt.push_back(pt[hullID[0]]);
+			tempPt.push_back(pt[hullID[1]]);
+			tempPt.push_back(pt[hullID[2]]);
+			tempPt.push_back(pt[hullID[3]]);
+			OrderCorners(tempPt, orderedPt);
 			if (IsRec(orderedPt, 20)) {
 				int centerID = 10 - hullID[0] - hullID[1] - hullID[2] - hullID[3];
 				orderedPt.push_back(pt[centerID]);
