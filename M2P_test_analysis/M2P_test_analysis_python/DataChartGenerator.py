@@ -16,6 +16,8 @@ file_extention = ".csv"
 arg = argparse.ArgumentParser("This is data chart generator for superimposition test analysis! give directory with csv log.")
 
 def get_filenames(path):
+    print( "enumerate path %s \n" %(path) )
+		
     file_list = []
     for root, dirs, files in os.walk(path):
         for name in files:
@@ -36,7 +38,9 @@ def main(arg):
         listfiles = get_filenames(prefix)
 
     except IOError:
+        print( " IOError" )
         return 0
+		
     else:
         filenames = (listfiles)
 
@@ -48,6 +52,8 @@ def main(arg):
     max_iteration = max_time_offset - min_time_offset
 
     for filename in filenames:
+        print( "process %s " %(filename) )
+		
         roxindex = 1
         fig = make_subplots(rows=7, row_heights=[1000 for c in range(0, 7)], subplot_titles=[
             'original position log',
@@ -362,9 +368,12 @@ def main(arg):
         output_filepath = os.path.join(prefix , filename.replace('.csv', '_') + 'datachart' + '.html')
         io.write_html(fig, include_plotlyjs='cdn', file=output_filepath)
         print("write %s finish" %(output_filepath))
+        if args.preview :
+            fig.show()
 
 
 if __name__ == '__main__':
-    arg.add_argument("--directory", "-d", default="./logs/", type=str, required=True, help="the folder of your log input files.")
+    arg.add_argument("-d" , "--directory",  default="./logs/", type=str, required=True, help="the folder of your log input files.")
+    arg.add_argument("-p", "--preview", action="store_true" , help="if open the results after process.")
     args = arg.parse_args()
     main(args)
