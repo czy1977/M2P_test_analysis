@@ -24,3 +24,5 @@ void GetExpectedPositionFromMeanValue(std::list<cv::Point2f>& uvHistory, CRefere
 
 
 void ProcessMainLoopKeyEvent(bool & needQuit, FRAME_CONTROL & control);
+
+

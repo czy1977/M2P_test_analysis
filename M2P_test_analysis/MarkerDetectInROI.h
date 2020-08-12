@@ -29,5 +29,7 @@ public:
 	static void GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize);
 	bool FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector::Params> params, int thd,
 		Mat src, vector<Point2f> pts, Point2f &centerPt);
+private:
+	int sizeOfROI;
 };
 

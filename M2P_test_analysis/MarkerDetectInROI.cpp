@@ -6,11 +6,16 @@
 //#define SHOW_DEBUG_IMAGE
 
 #define RUN_MULTI_THREAD 1
-//#define DEBUG_ROI
+#if DEBUG
+#define DEBUG_ROI 1
+#endif
+
+#define ROI_MARGIN 10
 
 MarkerDetectInROI::MarkerDetectInROI()
 {
 	cornerNum = 0;
+	sizeOfROI = 80;
 }
 
 void MarkerDetectInROI::InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params,
@@ -26,6 +31,9 @@ void MarkerDetectInROI::InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::P
 	params->minDistBetweenBlobs = 20;
 	params->maxThreshold = 255;
 	params->minThreshold = 50;
+	params->maxCircularity = 1.0;
+	params->maxConvexity = 1.0;
+	params->maxInertiaRatio = 1.0;
 }
 
 bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDetector::Params> params,
@@ -41,9 +49,14 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 	invImg = invImg - gray;
 	//GaussianBlur(invImg, invImg, Size(), 0.5, 0.5);
 	Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(*params);
-	// std::vector<KeyPoint> corners;
+	
 	detector->detect(invImg, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
+	struct sizeOfKp {
+		bool operator() (KeyPoint & i, KeyPoint & j) { return i.size < j.size; }
+	} mySizeOfKp;
+	KeyPoint maxSizeKp = *std::max_element(tempKpt.begin(), tempKpt.end(), mySizeOfKp);
+	sizeOfROI = maxSizeKp.size + ROI_MARGIN;
 	//cout << corners.size() << endl;
 #ifdef DEBUG
 	Mat im_with_corners;
@@ -127,12 +140,12 @@ bool MarkerDetectInROI::FindMarkersInROI(std::shared_ptr<cv::SimpleBlobDetector:
 	vector<Mat> tempMat(4);
 
 	
-
+	int realRoisize = max(roiSize, sizeOfROI);
 
 #if RUN_MULTI_THREAD
 	vector<std::thread> threads(4);
 	for (int i = 0; i < 4; i++) {
-		threads[i] = std::thread(MarkerDetectInROI::DecetROI, ref(src),ref( corners), i, roiSize, ref(*params1), ref(candidatePts), ref(foundMarkFlags));
+		threads[i] = std::thread(MarkerDetectInROI::DecetROI, ref(src),ref( corners), i, realRoisize, ref(*params1), ref(candidatePts), ref(foundMarkFlags));
 	}
 	for (int i = 0; i < 4; i++) {
 		threads[i].join();
@@ -202,7 +215,8 @@ bool MarkerDetectInROI::FindMarkers(std::shared_ptr<cv::SimpleBlobDetector::Para
 		FindMarkersInWholeImg(params1, src);
 	}
 	else {
-		FindMarkersInROI(params1, params2, src, roiSize, marginSize);
+		int realRoisize = max(roiSize, sizeOfROI);
+		FindMarkersInROI(params1, params2, src, realRoisize, marginSize);
 		if (corners.size() == 0) {
 			FindMarkersInWholeImg(params1, src);
 		}
@@ -294,6 +308,11 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	Mat ROI = 255 - gray;;
 	detector->detect(ROI, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
+#if DEBUG_ROI
+	cv::namedWindow("DEBUG");
+	cv::imshow( "DEBUG",ROI);
+#endif
+
 	if (pt.size() == 1) {
 		pt[0].x = pt[0].x + p1x;
 		pt[0].y = pt[0].y + p1y;

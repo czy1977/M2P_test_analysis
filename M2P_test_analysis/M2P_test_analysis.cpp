@@ -118,14 +118,14 @@ void DrawUVValue(Mat frame, Point2f uv, Point2f pt) {
 	uvText << std::setprecision(2);
 	uvText << uv.x << "," << uv.y;
 	std::string text = uvText.str();
-	cv::putText(frame, text, pt, cv::FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+	cv::putText(frame, text, pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, Scalar(0, 255, 255), 1);
 }
 void DrawStartUV(Mat  frame, Point2f pt) {
 #if SKIP_DRAWING
 	return;
 #endif // SKIP_DRAWING
 
-	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS, 40);
+	cv::drawMarker(frame, pt, Scalar(255, 255, 0), MARKER_CROSS, 80,2);
 }
 
 Point2f GetMeanValue(std::list<cv::Point2f> &uvHistory, int maxNumber)
@@ -228,7 +228,23 @@ void initArgParser(int argc, char *argv[], cmdline::parser & parser) {
 	parser.set_program_name("M2P_test_analysis");
 	parser.parse_check(argc, argv);
 }
+void DrawMarkers(cv::Mat &frame, MarkerDetectInROI * mdROI)
+{
+	if (mdROI->corners.size() >= 4) {
+		putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+		putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+		putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+		putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
+		circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
+		circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
+		circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
+		circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+	}
+	if (mdROI->corners.size() >= 5) {
+		circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
+	}
 
+}
 int main(int argc, char *argv[]) {
 	Mat frame;
 	list<LOG_INFO> reportLogList;
@@ -332,17 +348,8 @@ int main(int argc, char *argv[]) {
 		if (mdROI->cornerNum == 4) {
 #if SKIP_DRAWING
 #else
-			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
+			DrawMarkers(frame, mdROI);
 #endif // SKIP_DRAWING
-
-
 			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 			renderenceBoard.UpdateCurrentTransform(inputArray);
 			Point2f expectedPosition(0, 0);
@@ -359,15 +366,7 @@ int main(int argc, char *argv[]) {
 		else if (mdROI->cornerNum == 5) {
 #if SKIP_DRAWING
 #else
-			putText(frame, "1", mdROI->corners[0], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "2", mdROI->corners[1], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "3", mdROI->corners[2], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			putText(frame, "4", mdROI->corners[3], cv::FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 3);
-			circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
-			circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
+				DrawMarkers(frame, mdROI);
 #endif // SKIP_DRAWING
 
 
@@ -429,6 +428,8 @@ int main(int argc, char *argv[]) {
 	//system("pause");
 	return 0;
 }
+
+
 
 void ProcessMainLoopKeyEvent(bool & needQuit, FRAME_CONTROL & control)
 {
