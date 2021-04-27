@@ -74,8 +74,8 @@ void ocvi::PoseEstFor3Dto3D(Mat pt3D1, Mat pt3D2, Mat &R, Mat &T){
 	// T is the translation from pt3D1 to pt3D2
 
 	Mat pt1MassCenter, pt2MassCenter;
-	reduce(pt3D1, pt1MassCenter, 0, CV_REDUCE_AVG);
-	reduce(pt3D2, pt2MassCenter, 0, CV_REDUCE_AVG);
+	reduce(pt3D1, pt1MassCenter, 0, cv::ReduceTypes::REDUCE_AVG);
+	reduce(pt3D2, pt2MassCenter, 0, cv::ReduceTypes::REDUCE_AVG);
 
 
 
@@ -185,7 +185,7 @@ void ocvi::FindHomoGraphyInStereo(Mat intriMatL, Mat intriMatR, Mat R, Mat T,
 }
 
 void ocvi::FindHomoGraphy(Mat pt2DL, Mat pt2DR, Mat &H) {
-	H = findHomography(pt2DL, pt2DR, CV_RANSAC);
+	H = findHomography(pt2DL, pt2DR, cv::RANSAC);
 
 	
 }

@@ -40,14 +40,14 @@ COpenCVVideoControlBar::~COpenCVVideoControlBar()
 void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 {
 	if (needUpdate) {
-    cap.set(CV_CAP_PROP_POS_FRAMES,position);
+	cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES,position);
 		needUpdate = false;
 	}
 	else if(firstInit)
 	{
 
-    count = cap.get(CV_CAP_PROP_FRAME_COUNT);
-    position = cap.get(CV_CAP_PROP_POS_FRAMES);
+    count = cap.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_COUNT);
+    position = cap.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
 		updating = true;
 		cv::setTrackbarMax(TRACKBAR_NAME, windowName, count);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
@@ -57,7 +57,7 @@ void COpenCVVideoControlBar::UpdateStatus(cv::VideoCapture & cap)
 	else
 	{
 		updating = true;
-    position = cap.get(CV_CAP_PROP_POS_FRAMES);
+	position = cap.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
 		cv::setTrackbarPos(TRACKBAR_NAME, windowName, position);
 	}
 

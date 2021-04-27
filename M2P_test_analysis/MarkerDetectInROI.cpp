@@ -35,7 +35,7 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 	vector<Point2f> pt;
 	float isFoundFlag;
 	Mat gray;
-	cvtColor(src, gray, CV_RGB2GRAY);
+	cvtColor(src, gray, cv::ColorConversionCodes::COLOR_RGB2GRAY);
 	//GaussianBlur(img, img, Size(), 0.5, 0.5);
 	Mat invImg = 255 * Mat::ones(gray.size(), CV_8U);
 	invImg = invImg - gray;
@@ -169,8 +169,15 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	vector<Point2f> pt;
 	Mat tempMatColor, tempMat;
 	GetROI(srcImg, tempMatColor, corners[i], roiSize);
+
+	if (tempMatColor.rows<10 || tempMatColor.cols<10) {
+		std::cout << "too small image: " << tempMatColor.rows << "x" << tempMatColor.cols << std::endl;
+		foundMark[i] = false;
+		return;
+	}
+
 	Mat gray;
-	cvtColor(tempMatColor, gray, CV_RGB2GRAY);
+	cvtColor(tempMatColor, gray, cv::ColorConversionCodes::COLOR_RGB2GRAY);
 	tempMat = 255 - gray;
 	detector->detect(tempMat, tempKpt);
 	KeyPoint::convert(tempKpt, pt);
@@ -270,8 +277,16 @@ bool MarkerDetectInROI::IsRec(vector<Point2f> &orderedCorners, float thd) {
 
 void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
 	auto s = roiSize/2;
-	cv::Range cols(std::max(0, (int)(pt.x - s)), std::min(src.rows, (int)(pt.x + s + 1)));
-	cv::Range rows(std::max(0, (int)(pt.y - s)), std::min(src.cols, (int)(pt.y + s + 1)));
+	cv::Range cols(std::max(0, (int)(pt.x - s)), std::min(src.cols, (int)(pt.x + s + 1)));
+	cv::Range rows(std::max(0, (int)(pt.y - s)), std::min(src.rows, (int)(pt.y + s + 1)));
+
+
+	if (cols.start>cols.end) cols.start = cols.end;
+	if (rows.start>rows.end) rows.start = rows.end;
+
+	std::cout << "GetROI: " << cols.start << ":" << cols.end << " " << rows.start << ":" << rows.end << std::endl;
+
+
 	ROI = src(rows, cols);
 //  ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
 }
@@ -288,8 +303,17 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	int p1x = max(pts[1].x+thd, pts[2].x+thd);
 	int p2y = min(pts[2].y-thd, pts[3].y-thd);
 	int p2x = min(pts[0].x-thd, pts[3].x-thd);
+
+	if (p1x<0 || p1x>=src.cols || p1y<0 || p1y>=src.rows || p2x <= p1x ||  p2y <= p1y) {
+		std::cout << "wrong ROI: " << p1x << ","<< p1y << " " << p2x << "," << p2y << " " << src.cols << "x" << src.rows	<< std::endl;
+		return false;
+	}
+
+
 	Mat srcROI = src(cv::Rect(p1x, p1y, p2x - p1x, p2y - p1y));
-	cvtColor(srcROI, gray, CV_RGB2GRAY);
+
+
+	cvtColor(srcROI, gray, cv::ColorConversionCodes::COLOR_RGB2GRAY);
 	Mat ROI = 255 - gray;;
 	detector->detect(ROI, tempKpt);
 	KeyPoint::convert(tempKpt, pt);

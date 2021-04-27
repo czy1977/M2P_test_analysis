@@ -37,7 +37,7 @@ void InitBlobParams(std::shared_ptr<cv::SimpleBlobDetector::Params> params, floa
 bool FindWhiteInBlackCircleGrid(std::shared_ptr<cv::SimpleBlobDetector::Params> params, Mat src, std::vector<KeyPoint> &keypoints) {
 	float isFoundFlag;
 	Mat gray;
-	cvtColor(src, gray, CV_RGB2GRAY);
+	cvtColor(src, gray, cv::ColorConversionCodes::COLOR_RGB2GRAY);
 
 	//GaussianBlur(img, img, Size(), 0.5, 0.5);
 

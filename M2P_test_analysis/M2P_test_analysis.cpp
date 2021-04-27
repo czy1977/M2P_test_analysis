@@ -89,7 +89,7 @@ float minBlobSize = 1200;
 float minCircularity = 0.8f;
 
 float maxVirtualBlobSize = 500;
-float minVirtualBlobSize = 0;
+float minVirtualBlobSize = 100;
 float minVirtualCircularity = 0.8;
 
 //float maxBlobSize = 4000;
@@ -154,21 +154,21 @@ Mat GetVideoFrame(VideoCapture & capf, FRAME_CONTROL & control) {
 		
 	}
 	else if (control == FRAME_PAUSE || control == FRAME_ONE_FRAME_PAUSE) {
-		double frame_index = capf.get(CV_CAP_PROP_POS_FRAMES);
+		double frame_index = capf.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
 		Mat frame2;
 		capf.retrieve(frame2);
 		frame = frame2.clone();
 		return frame;
-		//capf.set(CV_CAP_PROP_POS_FRAMES, frame_index);
+		//capf.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, frame_index);
 	}
 	else if (control == FRAME_FORWARD_ONE_FRAME) {
-		double frame_index = capf.get(CV_CAP_PROP_POS_FRAMES);
+		double frame_index = capf.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
 		control = FRAME_ONE_FRAME_PAUSE;
 
 	}
 	else if (control == FRAME_BACKWARD_ONE_FRAME) {
-		double frame_index = capf.get(CV_CAP_PROP_POS_FRAMES);
-		capf.set(CV_CAP_PROP_POS_FRAMES, frame_index - 2.0);
+		double frame_index = capf.get(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES);
+		capf.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, frame_index - 2.0);
 		control = FRAME_ONE_FRAME_PAUSE;
 	}
 	
@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
 
     cap = cv::VideoCapture(videoFile);
 
-    cap.set(CV_CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
+    cap.set(cv::VideoCaptureProperties::CAP_PROP_POS_FRAMES, VIDEO_START_FRAME);
     frameControlFlag = FRAME_PLAY;
     if (!cap.isOpened()) {
       cout << "Error opening video stream or file : " << videoFile << endl;
