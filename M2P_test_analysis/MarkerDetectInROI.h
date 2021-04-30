@@ -10,6 +10,10 @@ class MarkerDetectInROI
 {
 public:
 	vector<Point2f> corners;
+
+	static double lastSizeParam1;
+	static double lastSizeParam2;
+
 	int cornerNum;
 	MarkerDetectInROI();
 	~MarkerDetectInROI();
@@ -22,7 +26,6 @@ public:
 	bool FindMarkers(std::shared_ptr<cv::SimpleBlobDetector::Params> params1,
 		std::shared_ptr<cv::SimpleBlobDetector::Params> params2,
 		Mat src, int roiSize, int marginSize);
-
 	
 	void OrderCorners(vector<Point2f> orgCorners, vector<Point2f> &orderedCorners);
 	bool IsRec(vector<Point2f> &orderedCorners, float thd);

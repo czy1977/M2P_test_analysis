@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CBlobDetectorController.h"
 #include <opencv2/highgui.hpp>
-#define AREA_RANGE 5000
+//#define AREA_RANGE 20000
 #define MINCIRCULARITY_RANGE 100
 
 void _CBlobDetectorController_UpdateCallBack( int pos,void* pdata) {
@@ -28,7 +28,13 @@ CBlobDetectorController::~CBlobDetectorController()
 
 void CBlobDetectorController::open(std::shared_ptr<cv::SimpleBlobDetector::Params> parameters, std::string name)
 {
+
+
 	targetParameter = parameters;
+
+	static double AREA_RANGE = targetParameter->maxArea;
+
+
 	windowName = name + "_win";
 	cv::namedWindow(windowName, cv::WINDOW_NORMAL);
 	cv::setWindowTitle(windowName, name);
@@ -36,7 +42,7 @@ void CBlobDetectorController::open(std::shared_ptr<cv::SimpleBlobDetector::Param
 
 	cv::createTrackbar("filterByArea", windowName, &filterByArea, 1, [](int pos, void* pdata)-> void {
 		CBlobDetectorController * pInstance = static_cast <CBlobDetectorController*>(pdata);
-		if (NULL != pInstance) 
+		if (NULL != pInstance)
 		{
 			pInstance->targetParameter->filterByArea = (pos == 1) ? true : false;
 			pInstance->dirty();

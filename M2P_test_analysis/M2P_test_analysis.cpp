@@ -84,38 +84,21 @@ std::vector<std::string> GetImagesList(const std::string& path) {
 using namespace std;
 using namespace cv;
 
-float maxBlobSize = 1900;
-float minBlobSize = 1200;
-float minCircularity = 0.8f;
+// adjust here the size of big dots (in pixel)
+const float realDotSize = 40;
+const float virtualDotSize = realDotSize/2;
 
-float maxVirtualBlobSize = 500;
-float minVirtualBlobSize = 100;
+float maxBlobSize = 4*(M_PI/4.*realDotSize*realDotSize);
+float minBlobSize = 0.5*(M_PI/4.*realDotSize*realDotSize);
+
+float maxVirtualBlobSize = 2*(M_PI/4.*virtualDotSize*virtualDotSize);
+float minVirtualBlobSize = 0.25*(M_PI/4.*virtualDotSize*virtualDotSize);;
+
+float minCircularity = 0.8f;
 float minVirtualCircularity = 0.8;
 
-//float maxBlobSize = 4000;
-//float minBlobSize = 2000;
-//float minCircularity = 0.7f;
-
-//float maxVirtualBlobSize = 500;
-//float minVirtualBlobSize = 0;
-//float minVirtualCircularity = 0.5f;
-
-//float maxBlobSize = 8000;
-//float minBlobSize = 1500;
-//float minCircularity = 0.7f;
-
-//float maxVirtualBlobSize = 5000;
-//float minVirtualBlobSize = 1000;
-//float minVirtualCircularity = 0.5f;
-
-int roiSize = 80;
+int roiSize = realDotSize*3;
 int marginSize = 0;
-
-//#define VIDEO_FILE ("C0001-converted.mp4")
-//#define UVLOG_FILE ("log1.csv")
-
-//#define VIDEO_FILE ("video/C0008-converted.mp4")
-//#define UVLOG_FILE ("M2P_test_analysis_python/logs/2020-02-26/log_C0008.csv")
 
 #define VIDEO_FILE "video/video.mp4"
 #define UVLOG_FILE "logs/log.csv"
@@ -439,7 +422,32 @@ int main(int argc, char *argv[]) {
 				
 		bool isFoundFlag =false;
 
+		static bool first = true;
+
 		isFoundFlag = mdROI->FindMarkers(EnvMarkBlobParams, virtualMarkBlobParams, frame, roiSize, marginSize);
+
+		if (mdROI->cornerNum == 4 || mdROI->cornerNum ==5) {
+
+            if (first && mdROI->lastSizeParam1>0 && mdROI->lastSizeParam2>0) {
+                EnvMarkBlobParams->minArea = 0.8*(M_PI/4.*mdROI->lastSizeParam1*mdROI->lastSizeParam1);
+                EnvMarkBlobParams->maxArea = 1.2*(M_PI/4.*mdROI->lastSizeParam1*mdROI->lastSizeParam1);
+
+                virtualMarkBlobParams->minArea = 0.8*(M_PI/4.*mdROI->lastSizeParam2*mdROI->lastSizeParam2);
+                virtualMarkBlobParams->maxArea = 1.2*(M_PI/4.*mdROI->lastSizeParam2*mdROI->lastSizeParam2);
+                std::cout << "Refine blob detect sizes : real=" << EnvMarkBlobParams->minArea << ":" << EnvMarkBlobParams->maxArea << " virtual="
+                          << virtualMarkBlobParams->minArea << ":" << virtualMarkBlobParams->maxArea << std::endl;
+
+                minBlobSize = EnvMarkBlobParams->minArea;
+                maxBlobSize = EnvMarkBlobParams->maxArea;
+
+                minVirtualBlobSize = virtualMarkBlobParams->minArea;
+                maxVirtualBlobSize = virtualMarkBlobParams->maxArea;
+
+                first = false;
+            } else if (first) {
+                std::cerr << "Failed refine sizes: " <<mdROI->lastSizeParam1 << " " << mdROI->lastSizeParam2 << std::endl;
+            }
+        }
 
 		if (mdROI->cornerNum == 4) {
 #if SKIP_DRAWING
@@ -454,7 +462,6 @@ int main(int argc, char *argv[]) {
 			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
 #endif // SKIP_DRAWING
 
-
 			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
 			renderenceBoard.UpdateCurrentTransform(inputArray);
 			Point2f expectedPosition(0, 0);
@@ -465,7 +472,7 @@ int main(int argc, char *argv[]) {
 				renderenceBoard.UpdateCurrentTransform(inputArray);
 				Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x,(float) mouse_state.y));
 				DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
-			}				
+			}
 			PushLog(reportLogList, controlbar.position, expectedPosition);
 		}		
 		else if (mdROI->cornerNum == 5) {
@@ -479,31 +486,30 @@ int main(int argc, char *argv[]) {
 			circle(frame, mdROI->corners[1], 3, Scalar(255, 0, 0), 3);
 			circle(frame, mdROI->corners[2], 3, Scalar(255, 0, 0), 3);
 			circle(frame, mdROI->corners[3], 3, Scalar(255, 0, 0), 3);
-//      circle(frame, mdROI->corners[4], 3, Scalar(0, 0, 255), 3);
       cv::drawMarker(frame, mdROI->corners[4], Scalar(0, 0, 255), MARKER_CROSS, 20, 2);
 
 #endif // SKIP_DRAWING
 
 
-				vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
-				renderenceBoard.UpdateCurrentTransform(inputArray);
+			vector<Point2f> inputArray = { mdROI->corners[1], mdROI->corners[0], mdROI->corners[3], mdROI->corners[2] };
+			renderenceBoard.UpdateCurrentTransform(inputArray);
 
-				Point2f uv = renderenceBoard.GetUVCoordinate(mdROI->corners[4]);
-				uvHistoryList.push_back(uv);
-				Point2f expectedPosition(0,0);
-				GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard,  expectedPosition);
-				Point2f centerPt(mdROI->corners[4]);
+			Point2f uv = renderenceBoard.GetUVCoordinate(mdROI->corners[4]);
+			uvHistoryList.push_back(uv);
+			Point2f expectedPosition(0,0);
+			GetExpectedPositionFromMeanValue(uvHistoryList, renderenceBoard,  expectedPosition);
+			Point2f centerPt(mdROI->corners[4]);
 
-				DrawUVValue(frame, uv, centerPt);
-				PushLog(reportLogList, controlbar.position,uv, centerPt, expectedPosition);
+			DrawUVValue(frame, uv, centerPt);
+			PushLog(reportLogList, controlbar.position,uv, centerPt, expectedPosition);
 
-				if (mouse_state.flags && EVENT_FLAG_LBUTTON) 
-				{
-					Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x, (float)mouse_state.y));
-					DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
-				}
+			if (mouse_state.flags && EVENT_FLAG_LBUTTON)
+			{
+				Point2f uv = renderenceBoard.GetUVCoordinate(Point2f((float)mouse_state.x, (float)mouse_state.y));
+				DrawUVValue(frame, uv, Point2f((float)mouse_state.x, (float)mouse_state.y));
+			}
 			
-				DrawStartUV(frame , expectedPosition);
+			DrawStartUV(frame , expectedPosition);
 		}
 		else {
 			cout << "out of mark number ..."<< mdROI->cornerNum << endl;
@@ -520,6 +526,7 @@ int main(int argc, char *argv[]) {
 
 		bool needQuit = false;
 		ProcessMainLoopKeyEvent(needQuit, frameControlFlag);
+
 		if (needQuit) 
 			break;
 #ifdef OUTPUT_FPS

@@ -8,6 +8,10 @@
 #define RUN_MULTI_THREAD 1
 //#define DEBUG_ROI
 
+double MarkerDetectInROI::lastSizeParam1 = -1.;
+double MarkerDetectInROI::lastSizeParam2 = -1.;
+
+
 MarkerDetectInROI::MarkerDetectInROI()
 {
 	cornerNum = 0;
@@ -61,6 +65,7 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 			OrderCorners(pt, orderedPt);
 			if (IsRec(orderedPt, 20)) {
 				isFoundFlag = true;
+				lastSizeParam1 = 1/4.*(tempKpt[hullID[0]].size+tempKpt[hullID[1]].size+tempKpt[hullID[2]].size+tempKpt[hullID[3]].size);
 				cornerNum = 4;
 				corners = orderedPt;
 			}
@@ -86,6 +91,10 @@ bool MarkerDetectInROI::FindMarkersInWholeImg(std::shared_ptr<cv::SimpleBlobDete
 			if (IsRec(orderedPt, 20)) {
 				int centerID = 10 - hullID[0] - hullID[1] - hullID[2] - hullID[3];
 				orderedPt.push_back(pt[centerID]);
+
+				lastSizeParam2 = tempKpt[centerID].size;
+				lastSizeParam1 = 1/4.*(tempKpt[hullID[0]].size+tempKpt[hullID[1]].size+tempKpt[hullID[2]].size+tempKpt[hullID[3]].size);
+
 				isFoundFlag = true;
 				cornerNum = 5;
 				corners = orderedPt;
@@ -183,9 +192,10 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {
 
-		pt[0].x = (int)(corners[i].x) + pt[0].x - roiSize / 2;
-		pt[0].y = (int)(corners[i].y) + pt[0].y - roiSize / 2;
+		pt[0].x = (int)(corners[i].x) + pt[0].x - tempMat.cols / 2;
+		pt[0].y = (int)(corners[i].y) + pt[0].y - tempMat.rows / 2;
 		candidatePts[i] = pt[0];
+		lastSizeParam1 = tempKpt[0].size;
 		foundMark[i] = true;
 #ifdef DEBUG_ROI
 		cout << i << " roi center:" << corners[i].x << ", " << corners[i].y << endl;
@@ -284,9 +294,6 @@ void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
 	if (cols.start>cols.end) cols.start = cols.end;
 	if (rows.start>rows.end) rows.start = rows.end;
 
-	std::cout << "GetROI: " << cols.start << ":" << cols.end << " " << rows.start << ":" << rows.end << std::endl;
-
-
 	ROI = src(rows, cols);
 //  ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
 }
@@ -305,13 +312,14 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 	int p2x = min(pts[0].x-thd, pts[3].x-thd);
 
 	if (p1x<0 || p1x>=src.cols || p1y<0 || p1y>=src.rows || p2x <= p1x ||  p2y <= p1y) {
-		std::cout << "wrong ROI: " << p1x << ","<< p1y << " " << p2x << "," << p2y << " " << src.cols << "x" << src.rows	<< std::endl;
+		std::cerr << "wrong ROI: " << p1x << ","<< p1y << " " << p2x << "," << p2y << " " << src.cols << "x" << src.rows	<< std::endl;
 		return false;
 	}
 
 
 	Mat srcROI = src(cv::Rect(p1x, p1y, p2x - p1x, p2y - p1y));
 
+	cv::imshow("Central ROI", srcROI);
 
 	cvtColor(srcROI, gray, cv::ColorConversionCodes::COLOR_RGB2GRAY);
 	Mat ROI = 255 - gray;;
@@ -322,6 +330,7 @@ bool MarkerDetectInROI::FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector:
 		pt[0].x = pt[0].x + p1x;
 		pt[0].y = pt[0].y + p1y;
 		centerPt = pt[0];
+		lastSizeParam2 = tempKpt[0].size;
 		return true;
 	}
 	else {
