@@ -29,7 +29,7 @@ public:
 	
 	void OrderCorners(vector<Point2f> orgCorners, vector<Point2f> &orderedCorners);
 	bool IsRec(vector<Point2f> &orderedCorners, float thd);
-	static void GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize);
+	static Point2f  GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize);
 	bool FindCenterMarker(std::shared_ptr<cv::SimpleBlobDetector::Params> params, int thd,
 		Mat src, vector<Point2f> pts, Point2f &centerPt);
 };

@@ -177,7 +177,7 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	vector<KeyPoint> tempKpt;
 	vector<Point2f> pt;
 	Mat tempMatColor, tempMat;
-	GetROI(srcImg, tempMatColor, corners[i], roiSize);
+	auto pointOffset = GetROI(srcImg, tempMatColor, corners[i], roiSize);
 
 	if (tempMatColor.rows<10 || tempMatColor.cols<10) {
 		std::cout << "too small image: " << tempMatColor.rows << "x" << tempMatColor.cols << std::endl;
@@ -192,10 +192,18 @@ void MarkerDetectInROI::DecetROI(const cv::Mat & srcImg, const vector<Point2f> &
 	KeyPoint::convert(tempKpt, pt);
 	if (pt.size() == 1) {
 
-		pt[0].x = (int)(corners[i].x) + pt[0].x - tempMat.cols / 2;
-		pt[0].y = (int)(corners[i].y) + pt[0].y - tempMat.rows / 2;
+//		pt[0].x = (int)(corners[i].x) + pt[0].x - tempMat.cols / 2;
+//		pt[0].y = (int)(corners[i].y) + pt[0].y - tempMat.rows / 2;
+		pt[0].x = pointOffset.x + pt[0].x;
+		pt[0].y = pointOffset.y + pt[0].y;
 		candidatePts[i] = pt[0];
 		lastSizeParam1 = tempKpt[0].size;
+
+//		Mat im; src.copyTo(im);
+
+//		imshow("4dots"+std::to_string(i), im);
+//		circle(frame, mdROI->corners[0], 3, Scalar(255, 0, 0), 3);
+
 		foundMark[i] = true;
 #ifdef DEBUG_ROI
 		cout << i << " roi center:" << corners[i].x << ", " << corners[i].y << endl;
@@ -285,7 +293,7 @@ bool MarkerDetectInROI::IsRec(vector<Point2f> &orderedCorners, float thd) {
 	}
 }
 
-void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
+Point2f MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
 	auto s = roiSize/2;
 	cv::Range cols(std::max(0, (int)(pt.x - s)), std::min(src.cols, (int)(pt.x + s + 1)));
 	cv::Range rows(std::max(0, (int)(pt.y - s)), std::min(src.rows, (int)(pt.y + s + 1)));
@@ -295,6 +303,9 @@ void MarkerDetectInROI::GetROI(Mat src, Mat &ROI, Point2f pt, int roiSize) {
 	if (rows.start>rows.end) rows.start = rows.end;
 
 	ROI = src(rows, cols);
+
+	return Point2f(cols.start, rows.start);
+
 //  ROI = src(cv::Rect((int)(pt.x - roiSize / 2), (int)(pt.y - roiSize / 2), roiSize, roiSize));
 }
 

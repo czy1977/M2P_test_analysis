@@ -85,13 +85,13 @@ using namespace std;
 using namespace cv;
 
 // adjust here the size of big dots (in pixel)
-const float realDotSize = 40;
-const float virtualDotSize = realDotSize/2;
+const float realDotSize = 60;
+const float virtualDotSize = 0.75*realDotSize; //0.5*realDotSize; realDotSize
 
 float maxBlobSize = 4*(M_PI/4.*realDotSize*realDotSize);
-float minBlobSize = 0.5*(M_PI/4.*realDotSize*realDotSize);
+float minBlobSize = 1.5*(M_PI/4.*realDotSize*realDotSize); // 0.5
 
-float maxVirtualBlobSize = 2*(M_PI/4.*virtualDotSize*virtualDotSize);
+float maxVirtualBlobSize = 6*(M_PI/4.*virtualDotSize*virtualDotSize); // 2
 float minVirtualBlobSize = 0.25*(M_PI/4.*virtualDotSize*virtualDotSize);;
 
 float minCircularity = 0.8f;
